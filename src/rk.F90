@@ -168,5 +168,6 @@ subroutine rk
  enddo
 !
  telaps = telaps+dt
+ call write_telaps(telaps)
 !
 end subroutine rk
