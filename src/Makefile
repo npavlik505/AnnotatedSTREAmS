@@ -16,9 +16,11 @@ endif
 # singularity build nvhpc_21.1_devel.sif docker://nvcr.io/nvidia/nvhpc:21.1-devel-cuda_multi-ubuntu20.04
 # singularity shell --nv nvhpc_21.1_devel.sif
 ifeq (${COMPILE},"nvfortran") # mpif90 shipped with PGI compiler
-    FC = mpifort # precompiled mpifort included with nvidia hpc
+	#FC = mpifort # precompiled mpifort included with nvidia hpc
+    FC = mpif90
     ifeq (${MODE},"opt") 
-        OLEVEL = -O3 -Mcuda=ccall,cuda11.2 -DUSE_CUDA -DCUDA_ASYNC #-DNOCUDAAWAREMPI
+        #OLEVEL = -O3 -Mcuda=ccall,cuda11.2 -DUSE_CUDA -DCUDA_ASYNC -Mcuda=11.2
+        OLEVEL = -O3 -Mcuda=cuda11.2 -DUSE_CUDA -DCUDA_ASYNC 
     else
         OLEVEL = -Mcuda=ccall -DUSE_CUDA -DCUDA_ASYNC -g -DNOCUDAAWAREMPI
     endif
@@ -76,4 +78,4 @@ $(EXEC): $(OBJS) Makefile $(wildcard makefile.inc)
 
 .PHONY: clean
 clean:
-	$(RM) $(EXEC) $(MAIN) $(OBJS) $(OBJ_MODS) $(GRID) *.mod
+	$(RM) $(EXEC) $(MAIN) $(OBJS) $(OBJ_MODS) $(GRID) *.mod cfz_*.dat *.vtr *.q *.csv *.prof *.bin cf_*.dat d*g.dat *.xyz wavplot_*.dat csv_data/*
