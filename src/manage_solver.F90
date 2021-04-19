@@ -33,6 +33,7 @@ subroutine manage_solver
  endif
 
  call write_probe_data
+ call write_span_averaged
 !
 !Writing fields
  if (savefield) then
