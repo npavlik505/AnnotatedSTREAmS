@@ -3,23 +3,25 @@ subroutine manage_solver
  use mod_streams
  implicit none
 !
- logical :: updatestat,savefield,saverst,saveprobe
+ logical :: updatestat, savefield, saverst, saveprobe, savespanaverage
 !
 !call write_wallpressure
 !
  updatestat = .false.
  savefield  = .false.
  saverst    = .false.
- saveprobe  = .false.
+ saveprobe  = .true.
+ savespanaverage = .false.
 !
  if (mod(icyc,istat)==0) updatestat = .true.
  !if (telaps>tsol(istore)) savefield = .true.
  if (mod(icyc, 5000) == 0) savefield = .true.
 
  if (telaps>tsol_restart(istore_restart)) saverst = .true.
- if (mod(icyc, 100) == 0) saveprobe = .true.
+ if (mod(icyc, 100) == 0) savespanaverage= .true.
+
 !
- if (updatestat.or.savefield.or.saverst.or.saveprobe) then
+ if (updatestat.or.savefield.or.saverst.or.saveprobe.or. savespanaverage) then
   if (xrecyc>0._mykind) call recyc
   call updateghost()
   call prims()
@@ -38,6 +40,9 @@ subroutine manage_solver
 
  if (saveprobe) then
     call write_probe_data
+ endif
+
+ if (savespanaverage) then
     call write_span_averaged
  endif
 !
@@ -68,7 +73,7 @@ subroutine manage_solver
  endif
 
 !
- if (updatestat.or.savefield.or.saverst.or.saveprobe) then
+ if (updatestat.or.savefield.or.saverst.or.saveprobe.or.savespanaverage) then
   call reset_cpu_gpu()
  endif
 !
