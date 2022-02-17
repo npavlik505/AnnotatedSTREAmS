@@ -1,5 +1,6 @@
 module mod_probe 
-    real(8), dimension(:,:), allocatable :: span_average_rho, span_average_u, span_average_v, span_average_w, span_average
+    real(8), dimension(:,:), allocatable :: span_average_rho, span_average_u, span_average_v, &
+        span_average_w, span_average_e, span_average
     character(len=5) :: nxstr, nystr
 end module mod_probe
 
@@ -168,7 +169,7 @@ subroutine write_span_averaged
     ! works for icyc < 99,999 iterations
     write(current_cycle, "(I5.5)") icyc
 
-    current_filename = "spans/span_average_"//mpi_process_number//"_"//current_cycle//"_rho.vtk"
+    current_filename = "spans/span_average_"//mpi_process_number//"_"//current_cycle//"_average.vtk"
 
     allocate(span_average(nx, ny))
         call helper_average_span(1)
@@ -186,13 +187,17 @@ subroutine write_span_averaged
         call helper_average_span(4)
     call move_alloc(span_average, span_average_w)
 
+    allocate(span_average(nx, ny))
+        call helper_average_span(5)
+    call move_alloc(span_average, span_average_e)
+
     call write_span_vtk(current_filename)
 
     ! everything else is deallocated by moving the allocation to span_average 
     ! when writing to vtk
     ! we deallocate here so that we dont error when allocating at the start of 
     ! this subroutine on the second time that it is called
-    deallocate(span_average  )
+    deallocate(span_average)
 
 end subroutine write_span_averaged
 
@@ -223,9 +228,14 @@ subroutine helper_average_span(slice_var)
                 if (slice_var == 1) then
                     ! if we are dealing with rho
                     current_average = current_average + w(slice_var,i,j,k)
-                else
+                else if (slice_var ==2 .or. slice_var == 3 .or. slice_var == 4) then
                     ! if we are not dealing with rho then we need to divide by it
                     current_average = current_average + (w(slice_var,i,j,k) / w(1,i,j,k))
+                else 
+                    current_average = current_average + &
+                        (w(2,i,j,k) / w(1,i,j,k))**2 + &
+                        (w(3,i,j,k) / w(1,i,j,k))**2 + &
+                        (w(4,i,j,k) / w(1,i,j,k))**2 
                 end if
 
             enddo
@@ -350,7 +360,7 @@ subroutine write_vtk_dataarray(xml, slice_var)
         call move_alloc(span_average_w, span_average)
     else if (slice_var == 5) then 
         variable_name = "energy"
-        call move_alloc(span_average_w, span_average)
+        call move_alloc(span_average_e, span_average)
     endif
 
     write(23, '(a)',advance="no") '    <DataArray type="Float64" NumberOfComponents="1" Name="'&
