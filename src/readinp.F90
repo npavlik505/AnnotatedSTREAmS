@@ -20,9 +20,7 @@ subroutine readinp
 ! iflow = 1,2 ==> Boundary layer,SBLI
 !
 !       rm:             Free-stream Mach number
-!       retauinflow:    Estimated friction Reynolds number (target) at inflow
-!       trat:           Wall-to-recovery-temperature ratio
-!       deflec:         Deflection angle after shock (only for SBLI)
+!       retauinflow:    Estimated friction Reynolds number (target) at inflow trat:           Wall-to-recovery-temperature ratio deflec:         Deflection angle after shock (only for SBLI)
 !
  open (unit=12,file='input.dat',form='formatted')
  do i_skip=1,33

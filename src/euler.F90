@@ -1119,6 +1119,7 @@ end subroutine euler_k
         w_gpu, temperature_gpu, ducros_gpu, &
         fhat_trans_gpu, temperature_trans_gpu, fl_trans_gpu, & 
         fhat_gpu, fl_gpu, dcoe_gpu, dcsidx_gpu, detady_gpu, dzitdz_gpu, gplus, gminus, wv_trans_gpu )
+
         implicit none
         integer, parameter :: mykind = MYKIND
         ! Passed arguments
