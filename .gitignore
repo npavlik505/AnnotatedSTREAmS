@@ -41,3 +41,8 @@ src/input.dat
 src/*.dat
 src/*.prof
 src/*.bin
+**/*.q
+src/frames/
+src/vtks/
+src/frames/*
+src/vtks/*
