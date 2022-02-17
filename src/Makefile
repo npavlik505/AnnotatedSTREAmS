@@ -19,7 +19,7 @@ ifeq (${COMPILE},"nvfortran") # mpif90 shipped with PGI compiler
     ifeq (${MODE},"opt") 
         OLEVEL = -O3 -Mcuda=ccall,cuda11.2 -DUSE_CUDA -DCUDA_ASYNC #-DNOCUDAAWAREMPI
     else
-        OLEVEL = -O2 -Mcuda=ccall,cuda11.2 -DUSE_CUDA -DCUDA_ASYNC #-DNOCUDAAWAREMPI
+        OLEVEL = -Mcuda=ccall -DUSE_CUDA -DCUDA_ASYNC -g -DNOCUDAAWAREMPI
     endif
 endif
 
