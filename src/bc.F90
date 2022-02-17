@@ -39,10 +39,14 @@ subroutine bc(inr)
 !  'Physical' boundary conditions
 !
    do ilat=1,2*ndim ! loop on all sides of the boundary (3D -> 6, 2D -> 4)
+    !if (masterproc) then
+    !  write(*,*) "ibc(ilat) is", ibc(ilat)
+    !endif
+
     if (ibc(ilat)==1) call bcfree(ilat)
     ! types 2 and 4 share the same boundary condition subroutine even though they 
     ! have different names?
-    if (ibc(ilat)==2) call bcextr(ilat) 
+    if (ibc(ilat)==2) call bcextr(ilat)
     if (ibc(ilat)==4) call bcextr(ilat)
     if (ibc(ilat)==5) call bcwall_staggered(ilat)
     if (ibc(ilat)==6) call bcwall(ilat)
@@ -53,7 +57,10 @@ subroutine bc(inr)
       call bcdf(ilat)
       dfupdated = .true.
      endif
-    if (ibc(ilat)==10) call bc_constant_input(ilat)
+    endif
+    !if (ibc(ilat)==10) call bc_constant_input(ilat)
+    if (ibc(ilat)==11) then 
+        call bcblow(ilat)
     endif
     if (ibc(ilat)==10) call bcrecyc(ilat)
    enddo

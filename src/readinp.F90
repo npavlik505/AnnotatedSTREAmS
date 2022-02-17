@@ -87,7 +87,8 @@ subroutine readinp
  case (2) ! SBLI
   ibc(1) = ibc_inflow
   ibc(2) = 4
-  ibc(3) = 8
+  !ibc(3) = 8
+  ibc(3) = 11
   ibc(4) = 7
   ibcnr(1) = 1
  end select
