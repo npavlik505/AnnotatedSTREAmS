@@ -12,33 +12,6 @@ ifeq (${PREC},"single") # mpif90 shipped with PGI compiler
 endif
 #----------------------------------------------------------------------
 
-ifeq (${COMPILE},"cray-cuda") # mpif90 shipped with PGI compiler
-    # Pitz-Daint instructions (2020)
-    # module load pgi
-    # module swap PrgEnv-cray PrgEnv-pgi
-    CUDA_HOME = $(CRAY_CUDATOOLKIT_DIR)
-    INCLUDE   = -I $(MPICH_DIR)/include 
-    FCLIBS    = -L$(MPICH_DIR)/lib -lmpich 
-    FC        = pgf90
-    LDFLAGS   = -L$(CUDA_HOME)/lib64
-    ifeq (${MODE},"opt") 
-        OLEVEL = -O3 -Mcuda=ccall -DUSE_CUDA -DCUDA_ASYNC -DNOCUDAAWAREMPI
-    else
-        OLEVEL = -Mcuda=ccall -DUSE_CUDA -DCUDA_ASYNC -g -DNOCUDAAWAREMPI
-    endif
-endif
-
-ifeq (${COMPILE},"pgi-cuda") # mpif90 shipped with PGI compiler
-#   FC = mpipgifort
-    FC = mpif90
-    ifeq (${MODE},"opt") 
-        #OLEVEL = -O3 -Mcuda=ccall,cuda10.2,ptxinfo -DUSE_CUDA -DCUDA_ASYNC #-DNOCUDAAWAREMPI
-        OLEVEL = -O3 -Mcuda=ccall,cuda10.2 -DUSE_CUDA -DCUDA_ASYNC #-DNOCUDAAWAREMPI
-    else
-        OLEVEL = -Mcuda=ccall,cuda10.2 -DUSE_CUDA -DCUDA_ASYNC
-    endif
-endif
-
 # singularity build nvhpc_21.1_devel.sif docker://nvcr.io/nvidia/nvhpc:21.1-devel-cuda_multi-ubuntu20.04
 # singularity shell --nv nvhpc_21.1_devel.sif
 ifeq (${COMPILE},"nvfortran") # mpif90 shipped with PGI compiler
@@ -50,34 +23,6 @@ ifeq (${COMPILE},"nvfortran") # mpif90 shipped with PGI compiler
     endif
 endif
 
-ifeq (${COMPILE},"pgi-cuda-sync") # mpif90 shipped with PGI compiler
-    FC = mpif90 
-    ifeq (${MODE},"opt") 
-        OLEVEL = -O3 -Mcuda=ccall,cuda10.2 -DUSE_CUDA
-    else
-        OLEVEL = -Mcuda=ccall,cuda10.2 -DUSE_CUDA
-    endif
-endif
-
-ifeq (${COMPILE},"pgi") # mpif90 shipped with PGI compiler or other MPI
-    FC = mpif90 
-    ifeq (${MODE},"opt") 
-        OLEVEL = -O3 
-    else
-        OLEVEL = -O2 -Mbounds -Ktrap=fp -g
-    endif
-endif
-
-ifeq (${COMPILE},"intel") # mpiifort from IntelMPI
-    FC = mpiifort
-#   FC = mpif90 -fc=gfortran
-    ifeq (${MODE},"opt") 
-        OLEVEL = -O3
-    else
-        OLEVEL = -O2 -check bounds,uninit -g -fpe0 -traceback
-    endif
-endif
-
 ifeq (${COMPILE},"gnu") # mpif90 from MPI library
     FC = mpif90
     ifeq (${MODE},"opt") 
@@ -85,15 +30,6 @@ ifeq (${COMPILE},"gnu") # mpif90 from MPI library
     else
         OLEVEL = -O2 -fbounds-check -g -fbacktrace -fdump-core -ffpe-trap=zero,invalid,overflow -Wuninitialized -Wall
         #OLEVEL = -O2 -fbounds-check -g -fbacktrace -fdump-core
-    endif
-endif
-
-ifeq (${COMPILE},"ibmxl") # mpif90 from MPI library
-    FC = mpif90
-    ifeq (${MODE},"opt") 
-        OLEVEL = -O4
-    else
-        OLEVEL = -O2 -g
     endif
 endif
 
