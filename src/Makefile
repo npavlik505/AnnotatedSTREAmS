@@ -50,7 +50,9 @@ OBJ_FILES = alloc.o bcdf.o bcextr.o bcfree.o bc.o bcrecyc.o bcrelax.o bcshk.o bc
     visflx.o writedf.o writefield.o writefieldvtk.o writegridplot3d.o writerst.o \
     writestatbl.o writestatchann.o writestat.o writestatzbl.o write_wallpressure.o visflx_stag.o
     writestatbl.o writestatchann.o writestat.o writestatzbl.o write_wallpressure.o \
-	write_probe_data.o bc_constant_input.o bcblow.o
+	write_probe_data.o 
+
+# -- bc_constant_input.o bcblow.o
 
 OBJ_MODS = mod_streams.o mod_sys.o euler.o
 OBJS = $(OBJ_MODS) $(OBJ_FILES) $(MAIN)

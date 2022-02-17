@@ -261,6 +261,7 @@ subroutine write_span_vtk(filename)
     call write_vtk_dataarray(xml, 2)
     call write_vtk_dataarray(xml, 3)
     call write_vtk_dataarray(xml, 4)
+    call write_vtk_dataarray(xml, 5)
 
     call write_vtk_footer(xml)
 
@@ -301,7 +302,7 @@ subroutine write_vtk_header(xml)
     ! nrank = 1 would cover ranges i = 251, 500
     ! etc
     do i = (nx * nrank) +1 ,nx * (nrank + 1)
-        write(curr_cycle, "(E15.10)") xg(i)
+        write(curr_cycle, "(E16.10)") xg(i)
         write(23, "(A1, a)", advance="no") ' ', curr_cycle
     enddo
 
@@ -310,14 +311,14 @@ subroutine write_vtk_header(xml)
     write(23, "(a)", advance="no") trim(xml)
 
     do j = 1,nymax
-        write(curr_cycle, "(E15.10)") yg(j)
-        write(23, "(a, A15)", advance="no") ' ', curr_cycle
+        write(curr_cycle, "(E16.10)") yg(j)
+        write(23, "(A1, a)", advance="no") ' ', curr_cycle
     enddo
 
 
     xml = '</DataArray>' // new_line('a')  
 
-    xml = trim(xml) // '      <DataArray type="Float64" NumberOfComponents="1" name="Z" format="ascii">0.0</DataArray>'  
+    xml = trim(xml) // '      <DataArray type="Float64" NumberOfComponents="1" Name="Z" format="ascii">0.0</DataArray>'  
     xml = trim(xml) // new_line('a')
     xml = trim(xml) // '     </Coordinates>' // new_line('a')
     xml = trim(xml) // '   <PointData>' // new_line('a')
@@ -360,7 +361,7 @@ subroutine write_vtk_dataarray(xml, slice_var)
         do i = 1, nx
             write(curr_cycle, '(E16.10)') span_average(i,j)
             !xml = trim(xml) // ' ' // curr_cycle // ' '
-            write(23, "(a, A16)", advance="no") ' ', curr_cycle
+            write(23, "(a, A17)", advance="no") ' ', curr_cycle
         enddo
     enddo
 

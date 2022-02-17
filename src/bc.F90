@@ -58,11 +58,11 @@ subroutine bc(inr)
       dfupdated = .true.
      endif
     endif
-    !if (ibc(ilat)==10) call bc_constant_input(ilat)
-    if (ibc(ilat)==11) then 
-        call bcblow(ilat)
-    endif
     if (ibc(ilat)==10) call bcrecyc(ilat)
+    !if (ibc(ilat)==10) call bc_constant_input(ilat)
+    !if (ibc(ilat)==11) then 
+    !    call bcblow(ilat)
+    !endif
    enddo
 !
   else

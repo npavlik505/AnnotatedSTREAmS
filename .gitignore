@@ -1,6 +1,6 @@
 # Prerequisites
 **/*.d
-#
+
 # Compiled Object files
 **/*.slo
 **/*.lo
@@ -34,3 +34,10 @@ src/input.dat
 **/*.xyz
 **/*.csv
 **/*.sif
+
+**/*.csv
+**/*.vtk
+**/dt_limitations
+src/*.dat
+src/*.prof
+src/*.bin
