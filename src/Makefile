@@ -3,7 +3,11 @@
 # SUPPORTED MODES  : opt, debug [default=debug]
 # SUPPORTED PRECISIONS (PREC) : single, double [default=double]
 #----------------------------------------------------------------------
-#COMPILE = "nvfortran"
+# by default, compile with the GNU compiler
+# in the singularity build script for GPU mode this will be automatically
+# replaced with 
+# COMPILE = "nvfortran"
+# caveat: the string below must be EXACTLY: `COMPILE = "gnu"`
 COMPILE = "gnu"
 MODE    = "opt"
 PREC    = "double"
@@ -19,7 +23,7 @@ ifeq (${COMPILE},"nvfortran") # mpif90 shipped with PGI compiler
 	#FC = mpifort # precompiled mpifort included with nvidia hpc
     FC = mpif90
     ifeq (${MODE},"opt") 
-        OLEVEL = -O3 -Mcuda=cuda11.2 -DUSE_CUDA -DCUDA_ASYNC #-Mnoautoinline
+        OLEVEL = -O3 -Mcuda=cuda11.5 -DUSE_CUDA -DCUDA_ASYNC
     else
         OLEVEL = -Mcuda=ccall -DUSE_CUDA -DCUDA_ASYNC -g -DNOCUDAAWAREMPI
     endif

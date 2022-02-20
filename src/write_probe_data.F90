@@ -1,6 +1,5 @@
 module mod_probe 
-    real(8), dimension(:,:), allocatable :: span_average_rho, span_average_u, span_average_v, &
-        span_average_w, span_average_e, span_average
+    real(8), dimension(:,:,:), allocatable :: span_average
     character(len=5) :: nxstr, nystr
 end module mod_probe
 
@@ -129,7 +128,6 @@ subroutine write_probe_data()
 
 end subroutine write_probe_data
 
-
 subroutine init_write_telaps()
     use mod_streams
     implicit none
@@ -164,34 +162,18 @@ subroutine write_span_averaged
     character(len=2) :: mpi_process_number
     character(len=70) :: current_filename
 
-    write(mpi_process_number, "(I2.2)") nrank
-
     ! works for icyc < 99,999 iterations
     write(current_cycle, "(I5.5)") icyc
+    current_filename = "spans/span_average_"//current_cycle//"_average.binary"
 
-    current_filename = "spans/span_average_"//mpi_process_number//"_"//current_cycle//"_average.vtk"
+    allocate(span_average(nx, ny, 5))
+    call helper_average_span(1)
+    call helper_average_span(2)
+    call helper_average_span(3)
+    call helper_average_span(4)
+    call helper_average_span(5)
 
-    allocate(span_average(nx, ny))
-        call helper_average_span(1)
-    call move_alloc(span_average, span_average_rho)
-
-    allocate(span_average(nx, ny))
-        call helper_average_span(2)
-    call move_alloc(span_average, span_average_u)
-
-    allocate(span_average(nx, ny))
-        call helper_average_span(3)
-    call move_alloc(span_average, span_average_v)
-
-    allocate(span_average(nx, ny))
-        call helper_average_span(4)
-    call move_alloc(span_average, span_average_w)
-
-    allocate(span_average(nx, ny))
-        call helper_average_span(5)
-    call move_alloc(span_average, span_average_e)
-
-    call write_span_vtk(current_filename)
+    call write_array_bytes(current_filename)
 
     ! everything else is deallocated by moving the allocation to span_average 
     ! when writing to vtk
@@ -243,148 +225,73 @@ subroutine helper_average_span(slice_var)
             ! TODO: hopefully this is not an overflow somewhere
             current_average = current_average / nz
 
-            span_average(i,j) = current_average
+            span_average(i,j, slice_var) = current_average
         enddo
     enddo
 
 end subroutine helper_average_span
 
-subroutine write_span_vtk(filename)
+subroutine write_array_bytes(filename)
     use mod_streams
     use mod_probe
     implicit none
 
     ! the number of points in each of the directions
-    character(len=1000) :: xml ! this allocation errors with nvhpc compiler
     character(len=16) :: curr_cycle
     character(len=70) :: filename
+    ! the number of variables that will be sent over mpi
+    integer :: count
+    integer :: tag
+    integer :: master_id
+    integer :: i 
 
-    write(nxstr, "(I4)")  nxmax
-    write(nystr, "(I4)")  nymax
+    count = nx * ny * 5
+    master_id = 0
 
-    open(23, file=filename, form='formatted')
+    if (masterproc) then 
+        open(23, file=filename, form="unformatted", access="stream")
 
-    ! start by writing the general header that we use for everything
-    call write_vtk_header(xml)
+        ! write all of the current process' span_average information
+        call write_current_array_file(23)
 
-    call write_vtk_dataarray(xml, 1)
-    call write_vtk_dataarray(xml, 2)
-    call write_vtk_dataarray(xml, 3)
-    call write_vtk_dataarray(xml, 4)
-    call write_vtk_dataarray(xml, 5)
+        write(*,*) "(master) wrote data for self"
 
-    call write_vtk_footer(xml)
+        ! then, recieve all the information from the other MPI procs and write it to the file
 
-    close(23)
-end subroutine write_span_vtk
-
-subroutine write_vtk_header(xml)
-    use mod_streams
-    use mod_sys
-    use mod_probe
-    implicit none
-
-    character(len=16) :: curr_cycle
-    character(len=1000) :: xml ! this allocation errors with nvhpc compiler
-    character(len=5) :: gloabl_x_end, global_x_start
-    integer:: i, j, k
-
-    write(global_x_start, "(I5)")  (nx *nrank) +1
-    write(gloabl_x_end, "(I5)")  nx * (nrank+1)
-
-    xml = '<?xml version="1.0"?>'//new_line('a')//' &
-       & <VTKFile type="RectilinearGrid" version="1.0" byte_order="LittleEndian" header_type="UInt64">'//new_line('a')//' &
-       ! start whole extent
-       &  <RectilinearGrid WholeExtent="'//trim(adjustl(global_x_start))//' &
-       & '//trim(adjustl(gloabl_x_end))//' 1 '//trim(adjustl(nystr))//' 1 1">'//new_line('a')//' &
-       ! finished whole extent
-       &   <Piece Extent="'//trim(adjustl(global_x_start))//' '//trim(adjustl(gloabl_x_end))//'& 
-       & 1 '//trim(adjustl(nystr))//' 1 1">'//new_line('a')//' &
-       &    <Coordinates>'//new_line('a')//' &
-       &     <DataArray type="Float64" NumberOfComponents="1" Name="X" format="ascii"> '
-
-    write(23, "(a)", advance="no") trim(adjustl(xml))
-
-    ! this indexing ensures that we are writing only the information that we are directly
-    ! in control of
-    ! for a nxmax = 1000 and 4 mpi process splitting this in the x direction nx = 250
-    ! nrank = 0 would cover ranges i = 1, 250
-    ! nrank = 1 would cover ranges i = 251, 500
-    ! etc
-    do i = (nx * nrank) +1 ,nx * (nrank + 1)
-        write(curr_cycle, "(E16.10)") xg(i)
-        write(23, "(A1, a)", advance="no") ' ', curr_cycle
-    enddo
-
-    xml = '</DataArray>' // new_line('a') 
-    xml = trim(xml) // '      <DataArray type="Float64" NumberOfComponents="1" Name="Y" format="ascii">'
-    write(23, "(a)", advance="no") trim(xml)
-
-    do j = 1,nymax
-        write(curr_cycle, "(E16.10)") yg(j)
-        write(23, "(A1, a)", advance="no") ' ', curr_cycle
-    enddo
-
-
-    xml = '</DataArray>' // new_line('a')  
-
-    xml = trim(xml) // '      <DataArray type="Float64" NumberOfComponents="1" Name="Z" format="ascii">0.0</DataArray>'  
-    xml = trim(xml) // new_line('a')
-    xml = trim(xml) // '     </Coordinates>' // new_line('a')
-    xml = trim(xml) // '   <PointData>' // new_line('a')
-    write(23, '(a)') xml
-
-end subroutine write_vtk_header
-
-subroutine write_vtk_dataarray(xml, slice_var)
-    use mod_streams
-    use mod_probe
-    implicit none
-
-    integer :: slice_var, i, j, k
-    character(len=1000) :: xml
-    character(len=6) :: variable_name
-    character(len=16) :: curr_cycle
-
-    if (slice_var == 1) then
-        variable_name = "rho"
-        call move_alloc(span_average_rho, span_average)
-    else if (slice_var == 2) then 
-        variable_name = "u"
-        call move_alloc(span_average_u, span_average)
-    else if (slice_var == 3) then 
-        variable_name = "v"
-        call move_alloc(span_average_v, span_average)
-    else if (slice_var == 4) then 
-        variable_name = "w"
-        call move_alloc(span_average_w, span_average)
-    else if (slice_var == 5) then 
-        variable_name = "energy"
-        call move_alloc(span_average_e, span_average)
+        do i = 1,nproc-1
+            write(*,*) "(master) wrote data for proc", i
+            tag = i
+            call MPI_RECV(span_average(1:nx, 1:ny, 1:5), count, mpi_prec, tag, tag, mpi_comm_world, istatus, iermpi)
+            call write_current_array_file(23)
+        end do
+        
+        close(23)
+    else
+        tag = nrank
+        write(*,*) "from ", nrank, "sending data now to master"
+        call MPI_SEND(span_average(1:nx, 1:ny, 1:5), count, mpi_prec, master_id, tag, mpi_comm_world, iermpi)
     endif
 
-    write(23, '(a)',advance="no") '    <DataArray type="Float64" NumberOfComponents="1" Name="'&
-        & //trim(variable_name)//'" format="ascii">'
+
+    close(23)
+end subroutine write_array_bytes
 
 
-    do j = 1, ny
-        do i = 1, nx
-            write(curr_cycle, '(E16.10)') span_average(i,j)
-            !xml = trim(xml) // ' ' // curr_cycle // ' '
-            write(23, "(a, A17)", advance="no") ' ', curr_cycle
+! write the entire contents of span_average to a file
+subroutine write_current_array_file(filehandle)
+    use mod_streams
+    use mod_probe
+    implicit none
+
+    integer :: filehandle
+    integer :: arr_idx, i, j
+
+    do i =1,nx
+        do j = 1,ny
+            do arr_idx = 1,5
+                write(filehandle) span_average(i,j,arr_idx)
+            enddo
         enddo
     enddo
 
-    xml = '</DataArray>' // new_line('a') 
-    write(23, '(a)') xml
-
-end subroutine write_vtk_dataarray
-
-subroutine write_vtk_footer(xml)
-    character(len=1000) :: xml
-
-    xml =  '    </PointData>' // new_line('a') // '   </Piece>'//new_line('a') 
-    xml = trim(xml) // '  </RectilinearGrid>' //new_line('a') // '</VTKFile>'
-
-    write(23, '(a)') trim(adjustl(xml))
-end subroutine write_vtk_footer
+end subroutine write_current_array_file

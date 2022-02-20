@@ -49,6 +49,10 @@ subroutine readinp
  read (12,*)
  read (12,*)
  read (12,*) rand_start
+ read (12,*)
+ read (12,*)
+ read (12,*) save_probe_steps, save_span_average_steps
+
  close(12)
 !
  call check_input(2)

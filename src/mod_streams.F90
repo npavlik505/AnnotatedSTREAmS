@@ -67,6 +67,8 @@ module mod_streams
  real(mykind) :: rtrms
  real(mykind), dimension(0:nsolmax) :: tsol, tsol_restart
  real(mykind) :: dtsave, dtsave_restart
+ ! the number of solver steps between outputting probe information / span average information
+ integer :: save_probe_steps, save_span_average_steps
  integer :: iflow
  integer :: idiski, ndim
  integer :: istore, istore_restart 

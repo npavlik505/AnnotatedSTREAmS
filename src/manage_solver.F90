@@ -10,15 +10,25 @@ subroutine manage_solver
  updatestat = .false.
  savefield  = .false.
  saverst    = .false.
- saveprobe  = .true.
+ saveprobe  = .false.
  savespanaverage = .false.
 !
  if (mod(icyc,istat)==0) updatestat = .true.
- !if (telaps>tsol(istore)) savefield = .true.
- if (mod(icyc, 5000) == 0) savefield = .true.
+ if (telaps>tsol(istore)) savefield = .true.
+ !if (mod(icyc, 5000) == 0) savefield = .true.
 
  if (telaps>tsol_restart(istore_restart)) saverst = .true.
  if (mod(icyc, 100) == 0) savespanaverage= .true.
+
+ ! check if we should write probe information
+ if (save_probe_steps > 0) then
+    if (mod(icyc, save_probe_steps) == 0) saveprobe = .true.
+ end if
+
+ ! check if we should write span average information
+ if (save_span_average_steps > 0) then
+    if (mod(icyc, save_span_average_steps) == 0) savespanaverage = .true.
+ end if
 
 !
  if (updatestat.or.savefield.or.saverst.or.saveprobe.or. savespanaverage) then
