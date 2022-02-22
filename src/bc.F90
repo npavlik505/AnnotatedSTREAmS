@@ -20,6 +20,7 @@ subroutine bc(inr)
 ! | /    3   | /  /          ibc = 8  -> wall (PL type bc)
 ! |/         |/  k           ibc = 9  -> digital filtering for turbulent inflow
 ! /----------/               ibc = 10 -> Recycling-rescaling turbulent inflow
+!                            ibc = blowing_sbli_boundary_condition -> use blowing boundary condition
 !
 ! inr = 0 -> steady-type    boundary conditions
 ! inr = 1 -> non-reflecting boundary conditions
@@ -60,9 +61,9 @@ subroutine bc(inr)
     endif
     if (ibc(ilat)==10) call bcrecyc(ilat)
     !if (ibc(ilat)==10) call bc_constant_input(ilat)
-    !if (ibc(ilat)==11) then 
-    !    call bcblow(ilat)
-    !endif
+    if (ibc(ilat)== blowing_sbli_boundary_condition) then 
+        call bcblow(ilat)
+    endif
    enddo
 !
   else

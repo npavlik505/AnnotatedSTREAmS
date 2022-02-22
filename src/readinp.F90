@@ -52,6 +52,9 @@ subroutine readinp
  read (12,*)
  read (12,*)
  read (12,*) save_probe_steps, save_span_average_steps
+ read (12,*)
+ read (12,*)
+ read (12,*) force_sbli_blowing_bc
 
  close(12)
 !
@@ -91,8 +94,15 @@ subroutine readinp
  case (2) ! SBLI
   ibc(1) = ibc_inflow
   ibc(2) = 4
-  !ibc(3) = 8
-  ibc(3) = 11
+
+  if (force_sbli_blowing_bc == 1) then
+      ! use blowing boundary condition
+      ibc(3) = blowing_sbli_boundary_condition
+  else
+      ! use default solver BC
+      ibc(3) = 8
+  endif
+    
   ibc(4) = 7
   ibcnr(1) = 1
  end select

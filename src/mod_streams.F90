@@ -69,6 +69,12 @@ module mod_streams
  real(mykind) :: dtsave, dtsave_restart
  ! the number of solver steps between outputting probe information / span average information
  integer :: save_probe_steps, save_span_average_steps
+ ! override the default boundary condition on the bottom surface for SBLI conditions
+ ! to create a blowing area
+ integer :: force_sbli_blowing_bc
+ ! boundary condition integer (see bc.f90) to indicate that the bottom boundary
+ ! of the SBLI case should be blowing
+ integer, parameter :: blowing_sbli_boundary_condition = 11
  integer :: iflow
  integer :: idiski, ndim
  integer :: istore, istore_restart 
