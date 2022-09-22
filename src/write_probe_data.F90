@@ -3,17 +3,15 @@ module mod_probe
     character(len=5) :: nxstr, nystr
 end module mod_probe
 
-subroutine to_file(input_filename, i,j)
+! write all the z points for a given (i,j) combindation to `filenumber`
+subroutine to_file(filenumber, i,j)
     use mod_streams
     use mod_sys
     implicit none
-    character(len=120) :: input_filename
 
+    integer :: filenumber
     integer :: i, j, k
-    real(mykind) :: rho, rhou, rhov, rhow, vwrite, uwrite, wwrite
-
-    open(21,file=input_filename)
-    write(21, *) "rho, u, v, w"
+    real(mykind) :: rho, rhou, rhov, rhow
 
     do k = 1, nz
         rho =  w(1,i,j,k)
@@ -21,33 +19,35 @@ subroutine to_file(input_filename, i,j)
         rhov = w(3,i,j,k)
         rhow = w(4,i,j,k)
 
-        uwrite = rhou / rho
-        vwrite = rhov / rho
-        wwrite = rhow / rho
-
-        write(21, "(E36.30, A1, E36.30, A1, E36.30, A1, E36.30)") rho, ",", uwrite, ",", vwrite, ",", wwrite
+        write(filenumber) rho
+        write(filenumber) rhou / rho
+        write(filenumber) rhov / rho
+        write(filenumber) rhow / rho
     enddo
-
-    close(21)
 end subroutine to_file
 
-subroutine write_spanwise_probe_helper(probe_number, i, icyc)
+subroutine write_spanwise_probe_helper(probe_number, i, icyc, j1, j2, j3)
     implicit none
-    integer :: i, j, probe_number, icyc
+    integer :: i, probe_number, icyc, filenumber
+    integer :: j1, j2, j3
     character(len=120) :: filename
 
-    write(filename, "(A20, I1.1, A1, I5.5, A9)") "csv_data/span_probe_", probe_number, "_", icyc, "_visc.csv"
-    j = 5
-    call to_file(filename, i, j)
+    filenumber = 21
 
-    write(filename, "(A20, I1.1, A1, I5.5, A8)") "csv_data/span_probe_", probe_number, "_", icyc, "_log.csv"
-    j = 53
-    call to_file(filename, i, j)
+    write(filename, "(A20, I1.1, A1, I5.5, A7)") "csv_data/span_probe_", probe_number, "_", icyc, ".binary"
+    open(filenumber, file=filename, form="unformatted", access="stream")
 
-    write(filename, "(A20, I1.1, A1, I5.5, A9)") "csv_data/span_probe_", probe_number, "_", icyc, "_free.csv"
-    j = 168
-    call to_file(filename, i, j)
+    ! viscous data
+    call to_file(filenumber, i, j1)
 
+    ! log law data
+    call to_file(filenumber, i, j2)
+
+    ! free stream data
+    call to_file(filenumber, i, j3)
+
+    call flush(filenumber)
+    close(filenumber)
 end subroutine write_spanwise_probe_helper
 
 subroutine write_streamwise_probe(probe_number, j)
@@ -87,7 +87,25 @@ subroutine write_probe_data()
 
     implicit none
     integer :: i, j, k, dead
+    ! the locations in the streamwise direction that 
+    ! this mpi process is covering
+    integer :: nx_start, nx_end
+    ! locations in the y direction that probes will be placed
+    integer :: probe_j_1, probe_j_2, probe_j_3
+    integer :: probe_i_1, probe_i_2, probe_i_3
     character(len=120) :: filename
+
+    ! probe locations in the i direction
+    probe_i_1 = max(int((1./8.)* real(nxmax)), 1)
+    probe_i_2 = max(int((4./8.)* real(nxmax)), 1)
+    probe_i_3 = max(int((7./8.)* real(nxmax)), 1)
+    
+    ! probe in the viscous layer (1/70th of the total height)
+    probe_j_1 = max(int(real(nymax)      / 70.  ), 1)
+    ! probe just above the viscous layer (hopefully log law) (5% of the total height)
+    probe_j_2 = max(int(real(nymax) * 5. / 100. ), 1)
+    ! probe placed above half of the height (60 / 100)
+    probe_j_3 = max(int(real(nymax) * 60. / 100.), 1)
 
     ! The three probe locations 
     !  |____________________|____________________|___________________|____________________|
@@ -105,26 +123,25 @@ subroutine write_probe_data()
     !  X is a span-wise probe (into the page)
     !  o is a streamwise probe in the midplane
 
-    ! if we are the main thread
-    if (nrank==0) then
-        ! write probe data 1/4th in the x direction and half in y direction
-        i = nx *2/4
-        call write_spanwise_probe_helper(1, i, icyc)
+    nx_start = 1 + nrank * nx
+    nx_end = nx_start + nx
 
-    elseif (nrank==1) then
-        ! write probe data 1/2 in the x direction and half in y direction
-        i = nx-1
-        call write_spanwise_probe_helper(2, i, icyc)
-
-    elseif (nrank ==3) then
-        ! write probe data in the middle of the fourth process area, which
-        ! comes out to be ~3/4ths of the entire x distance
-        write(filename, "(A24, I5.5, A4)") "csv_data/w_probe_data_3_", icyc, ".csv"
-        i = nx*2/4
-        call write_spanwise_probe_helper(3, i, icyc)
+    ! first probe
+    if (nx_start < probe_i_1 .and. probe_i_1< nx_end) then
+        call write_spanwise_probe_helper(1,probe_i_1, icyc, probe_j_1,probe_j_2, probe_j_3)
     endif
 
-    call write_streamwise_probe(nrank+1, ny/2)
+    ! second probe
+    if (nx_start < probe_i_2 .and. probe_i_2< nx_end) then
+        call write_spanwise_probe_helper(2,probe_i_2, icyc, probe_j_1,probe_j_2, probe_j_3)
+    endif
+
+    ! third probe
+    if (nx_start < probe_i_3 .and. probe_i_3 < nx_end) then
+        call write_spanwise_probe_helper(3,probe_i_3, icyc, probe_j_1,probe_j_2, probe_j_3)
+    endif
+
+    !call write_streamwise_probe(nrank+1, ny/2)
 
 end subroutine write_probe_data
 
