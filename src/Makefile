@@ -30,7 +30,7 @@ ifeq (${COMPILE},"nvfortran") # mpif90 shipped with PGI compiler
 endif
 
 ifeq (${COMPILE},"gnu") # mpif90 from MPI library
-    FC = mpif90
+    FC = mpifort
     ifeq (${MODE},"opt") 
         OLEVEL = -O3 #-fno-inline-functions -fno-underscoring -ffree-line-length-512
     else
@@ -102,7 +102,11 @@ static:
 	mpifort $(f2pyfiles_mods) $(f2pyfiles) $(f2pyfiles_main) -o $(EXEC)
 
 f2py:
-	f2py --f90exec="mpifort" --f77exec="mpifort" -c $(OBJS) min_api.F90 -m libstreams 
+	#rm libstreams.*
+	f2py mod_streams.F90 -m libstreams -h mod_streams.pyf --overwrite-signature
+	#f2py --f90exec="mpifort" --f77exec="mpifort" -c $(OBJ_MODS) $(OBJ_FILES) min_api.F90 mod_streams.pyf -m libstreams 
+	f2py --f90exec="mpifort" --f77exec="mpifort" -c mod_streams.F90 mod_sys.o euler.o $(OBJ_FILES) min_api.F90 -m libstreams 
+	#f2py --f90exec="mpifort" --f77exec="mpifort" -c $(OBJ_MODS) $(OBJ_FILES) min_api.F90 -m libstreams 
 
 .PHONY: clean
 clean:

@@ -32,6 +32,7 @@ module mod_streams
  integer, parameter :: ndims = 3
  integer, dimension(:), allocatable  :: nblocks
  logical, dimension(:), allocatable  :: pbc
+ !f2py intent(hide) :: istatus
  integer, dimension(mpi_status_size) :: istatus
 !
  integer, dimension(:), allocatable :: ncoords
@@ -222,6 +223,8 @@ module mod_streams
  attributes(device) :: temperature_trans_gpu
  attributes(device) :: wv_gpu, wv_trans_gpu
 !
+ ! TODO: this might be problematic
+ !f2py intent(hide) :: local_comm, mydev
  integer :: local_comm, mydev
  attributes(device) :: w_gpu,fl_gpu,fln_gpu
  attributes(device) :: temperature_gpu,ducros_gpu
@@ -266,6 +269,7 @@ module mod_streams
  attributes(pinned) :: ducbuf1s, ducbuf2s, ducbuf3s, ducbuf4s, ducbuf5s, ducbuf6s
  attributes(pinned) :: ducbuf1r, ducbuf2r, ducbuf3r, ducbuf4r, ducbuf5r, ducbuf6r
 
+ !f2py intent(hide) :: stream1, stream2
  integer(kind=cuda_stream_kind) :: stream1, stream2
  attributes(device) :: vf_df_old,uf
  attributes(device) :: evmax_mat_yz,evmax_mat_y
