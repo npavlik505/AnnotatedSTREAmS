@@ -1,47 +1,54 @@
-subroutine solver
-!
-! Solve the compressible NS equations
-!
- use mod_streams
- implicit none
-!
- real(mykind) :: elapsed,startTiming,endTiming
-!
- integer :: i
- logical :: stop_streams
-!
- icyc   = ncyc0
- telaps = telaps0
-!
-!Copy arrays from CPU to GPU or move alloc
- call copy_cpu_to_gpu()
+module mod_solver
+    use mod_streams
 
-!
- if (masterproc) write(*,*) 'Compute time step'
- dtmin = abs(cfl)
- if (cfl>0._mykind) call step()
- if (masterproc) write(*,*) 'Done'
-!
- if (xrecyc>0._mykind) call recyc
- call updateghost() ! Needed here only for subsequent prims call
- call prims()
- if (tresduc>0._mykind.and.tresduc<1._mykind) then
-  call sensor()
-  call bcswapduc_prepare()
-  call bcswapduc()
- endif
-!
- open(20,file='output_streams.dat',position=stat_io)
+    !
+     real(mykind) :: elapsed,startTiming,endTiming
+    !
+     integer :: i
+     logical :: stop_streams
+end module
 
- startTiming = mpi_wtime()
-!
- stop_streams = .false.
+! init_solver contains all the setup routines that should take place as part of 
+subroutine init_solver
+    use mod_streams
+    use mod_solver
+    implicit none
 
-! init file for writing the time steps to a file 
- call init_write_telaps()
+     icyc   = ncyc0
+     telaps = telaps0
+    !
+    !Copy arrays from CPU to GPU or move alloc
+     call copy_cpu_to_gpu()
 
- do i=1,ncyc
-!
+    !
+     if (masterproc) write(*,*) 'Compute time step'
+     dtmin = abs(cfl)
+     if (cfl>0._mykind) call step()
+     if (masterproc) write(*,*) 'Done'
+    !
+     if (xrecyc>0._mykind) call recyc
+     call updateghost() ! Needed here only for subsequent prims call
+     call prims()
+     if (tresduc>0._mykind.and.tresduc<1._mykind) then
+      call sensor()
+      call bcswapduc_prepare()
+      call bcswapduc()
+     endif
+    !
+     open(20,file='output_streams.dat',position=stat_io)
+
+     startTiming = mpi_wtime()
+    !
+     stop_streams = .false.
+
+    ! init file for writing the time steps to a file 
+     call init_write_telaps()
+end subroutine
+
+subroutine step_solver()
+    use mod_solver
+    implicit none
+
   icyc = icyc+1
 !
   call rk() ! Third-order RK scheme
@@ -61,11 +68,12 @@ subroutine solver
   endif
 !
   call mpi_barrier(mpi_comm_world,iermpi)
-  inquire(file="stop.stop",exist=stop_streams)
-  call mpi_barrier(mpi_comm_world,iermpi)
-  if (stop_streams) exit
 !
- enddo
+end subroutine
+
+subroutine finalize_solver()
+    use mod_solver
+    implicit none
 !
  endTiming = mpi_wtime()
  elapsed = endTiming-startTiming
@@ -74,4 +82,26 @@ subroutine solver
   if (masterproc) write(20,*) 'Time-step time =', elapsed/ncyc
  endif
 !
+end subroutine 
+
+subroutine solver
+!
+! Solve the compressible NS equations
+!
+ use mod_streams
+ use mod_solver
+ implicit none
+!
+
+    ! initialize some solver stuff
+    call init_solver()
+
+ do i=1,ncyc
+     call step_solver()
+      inquire(file="stop.stop",exist=stop_streams)
+      call mpi_barrier(mpi_comm_world,iermpi)
+      if (stop_streams) exit
+ enddo
+
+ call finalize_solver()
 end subroutine solver

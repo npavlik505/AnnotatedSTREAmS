@@ -1,0 +1,374 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module libstreams ! in 
+    interface  ! in :libstreams
+        module mod_streams ! in :libstreams:mod_streams.F90
+            use mpi
+            use cudafor
+            integer, parameter,optional :: singtype=selected_real_kind(6,37)
+            integer, parameter,optional :: doubtype=selected_real_kind(15,307)
+            integer, parameter,optional,depend(singtype) :: mykind=4
+            integer, parameter,optional :: mpi_prec=mpi_real4
+            real(kind=4), parameter,optional :: tol_iter=0.00001_mykind
+            integer, parameter,optional :: nv=5
+            integer, parameter,optional :: nsmoo=10
+            integer, parameter,optional :: nvmean=20
+            integer, parameter,optional :: nsolmax=999999
+            integer, parameter,optional :: itmax=100000
+            real(kind=4), parameter,optional :: pi=4._mykind*atan(1._mykind)
+            integer, parameter,optional :: ndims=3
+            integer, allocatable,dimension(:) :: nblocks
+            logical, allocatable,dimension(:) :: pbc
+            integer dimension(mpi_status_size),intent(hide) :: istatus
+            integer, allocatable,dimension(:) :: ncoords
+            integer :: mp_cart
+            integer :: mp_cartx
+            integer :: mp_carty
+            integer :: mp_cartz
+            integer :: nrank
+            integer :: nproc
+            integer :: nrank_x
+            integer :: nrank_y
+            integer :: nrank_z
+            integer :: ileftx
+            integer :: irightx
+            integer :: ilefty
+            integer :: irighty
+            integer :: ileftz
+            integer :: irightz
+            integer :: iermpi
+            integer :: iercuda
+            integer :: nxmax
+            integer :: nymax
+            integer :: nymaxwr
+            integer :: nzmax
+            integer :: nx
+            integer :: ny
+            integer :: nz
+            integer :: ng
+            integer :: ngdf
+            integer :: io_type
+            integer :: enable_plot3d
+            integer :: enable_vtk
+            real(kind=4), parameter,optional :: gamma=1.4_mykind
+            real(kind=4), parameter,optional :: pr=0.72_mykind
+            real(kind=4), parameter,optional,depend(gamma) :: gm1=gamma-1._mykind
+            real(kind=4), parameter,optional,depend(gm1) :: gm=1._mykind/gm1
+            real(kind=4), parameter,optional,depend(gamma,pr,gm) :: ggmopr=4.0
+            real(kind=4), parameter,optional :: vtexp=3._mykind/4._mykind
+            real(kind=4), parameter,optional :: rfac=0.89_mykind
+            real(kind=4) :: rm
+            real(kind=4) :: re
+            real(kind=4) :: taw
+            real(kind=4) :: sqgmr
+            real(kind=4) :: s2tinf
+            real(kind=4) :: retauinflow
+            real(kind=4) :: trat
+            real(kind=4) :: twall
+            real(kind=4) :: tref_dimensional
+            real(kind=4) :: rtrms
+            real(kind=4) dimension(1000000) :: tsol
+            real(kind=4) dimension(1000000) :: tsol_restart
+            real(kind=4) :: dtsave
+            real(kind=4) :: dtsave_restart
+            integer :: save_probe_steps
+            integer :: save_span_average_steps
+            integer :: force_sbli_blowing_bc
+            integer, parameter,optional :: blowing_sbli_boundary_condition=11
+            integer :: iflow
+            integer :: idiski
+            integer :: ndim
+            integer :: istore
+            integer :: istore_restart
+            integer :: iorder
+            integer :: iweno
+            integer :: visc_type
+            real(kind=4) :: tresduc
+            real(kind=4), allocatable,dimension(:,:) :: dcoe
+            real(kind=4), allocatable,dimension(:,:) :: dcoe_gpu
+            real(kind=4), allocatable,dimension(:) :: winf
+            real(kind=4), allocatable,dimension(:) :: winf1
+            real(kind=4), allocatable,dimension(:) :: winf_gpu
+            real(kind=4), allocatable,dimension(:) :: winf1_gpu
+            real(kind=4) :: rho0
+            real(kind=4) :: t0
+            real(kind=4) :: p0
+            real(kind=4) :: u0
+            real(kind=4) :: v0
+            real(kind=4) :: w0
+            real(kind=4) :: s0
+            real(kind=4) :: ximp
+            real(kind=4) :: thetas
+            real(kind=4) :: deflec
+            real(kind=4) :: tanhsfac
+            real(kind=4) :: xsh
+            real(kind=4) :: pgradf
+            real(kind=4) :: heatflux
+            real(kind=4) :: aeroheat
+            real(kind=4) :: bulkcooling
+            integer :: ivis
+            logical :: masterproc
+            logical :: dfupdated
+            character(len=3) :: chx
+            character(len=3) :: chy
+            character(len=3) :: chz
+            character(len=6) :: stat_io
+            real(kind=4), allocatable,dimension(:,:,:,:) :: w
+            real(kind=4), allocatable,dimension(:,:,:,:) :: fl
+            real(kind=4), allocatable,dimension(:,:,:,:) :: fln
+            real(kind=4), allocatable,dimension(:,:,:,:) :: w_order
+            real(kind=4), allocatable,dimension(:,:,:,:) :: w_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: fl_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: fln_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: fhat_trans_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: fl_trans_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wv_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wv_trans_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: temperature_trans_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: temperature
+            real(kind=4), allocatable,dimension(:,:,:) :: temperature_gpu
+            logical, allocatable,dimension(:,:,:) :: ducros
+            logical, allocatable,dimension(:,:,:) :: ducros_gpu
+            real(kind=4) dimension(3) :: gamvec
+            real(kind=4) dimension(3) :: rhovec
+            real(kind=4) :: dtglobal
+            real(kind=4) :: cfl
+            real(kind=4) :: dtmin
+            real(kind=4) :: alpdt
+            real(kind=4) :: telaps
+            real(kind=4) :: telaps0
+            real(kind=4) :: alpdtold
+            integer :: icyc
+            integer :: ncyc
+            integer :: ncyc0
+            integer :: nstep
+            integer :: nprint
+            integer :: jbgrid
+            real(kind=4) :: rlx
+            real(kind=4) :: rly
+            real(kind=4) :: rlz
+            real(kind=4) :: rlywr
+            real(kind=4) :: dyp_target
+            real(kind=4), allocatable,dimension(:) :: x
+            real(kind=4), allocatable,dimension(:) :: y
+            real(kind=4), allocatable,dimension(:) :: z
+            real(kind=4), allocatable,dimension(:) :: yn
+            real(kind=4), allocatable,dimension(:) :: x_gpu
+            real(kind=4), allocatable,dimension(:) :: y_gpu
+            real(kind=4), allocatable,dimension(:) :: z_gpu
+            real(kind=4), allocatable,dimension(:) :: yn_gpu
+            real(kind=4), allocatable,dimension(:) :: xg
+            real(kind=4), allocatable,dimension(:) :: yg
+            real(kind=4), allocatable,dimension(:) :: zg
+            real(kind=4), allocatable,dimension(:) :: xg_gpu
+            real(kind=4), allocatable,dimension(:) :: dcsidx
+            real(kind=4), allocatable,dimension(:) :: dcsidx2
+            real(kind=4), allocatable,dimension(:) :: dcsidxs
+            real(kind=4), allocatable,dimension(:) :: detady
+            real(kind=4), allocatable,dimension(:) :: detady2
+            real(kind=4), allocatable,dimension(:) :: detadys
+            real(kind=4), allocatable,dimension(:) :: dzitdz
+            real(kind=4), allocatable,dimension(:) :: dzitdz2
+            real(kind=4), allocatable,dimension(:) :: dzitdzs
+            real(kind=4), allocatable,dimension(:) :: dcsidx_gpu
+            real(kind=4), allocatable,dimension(:) :: dcsidx2_gpu
+            real(kind=4), allocatable,dimension(:) :: dcsidxs_gpu
+            real(kind=4), allocatable,dimension(:) :: detady_gpu
+            real(kind=4), allocatable,dimension(:) :: detady2_gpu
+            real(kind=4), allocatable,dimension(:) :: detadys_gpu
+            real(kind=4), allocatable,dimension(:) :: dzitdz_gpu
+            real(kind=4), allocatable,dimension(:) :: dzitdz2_gpu
+            real(kind=4), allocatable,dimension(:) :: dzitdzs_gpu
+            real(kind=4), allocatable,dimension(:) :: dxg
+            real(kind=4), allocatable,dimension(:) :: dyg
+            real(kind=4), allocatable,dimension(:) :: dzg
+            real(kind=4), allocatable,dimension(:) :: xgh
+            real(kind=4), allocatable,dimension(:) :: ygh
+            real(kind=4), allocatable,dimension(:) :: zgh
+            real(kind=4), allocatable,dimension(:) :: xh
+            real(kind=4), allocatable,dimension(:) :: yh
+            real(kind=4), allocatable,dimension(:) :: zh
+            real(kind=4), allocatable,dimension(:) :: xh_gpu
+            real(kind=4), allocatable,dimension(:) :: yh_gpu
+            real(kind=4), allocatable,dimension(:) :: zh_gpu
+            real(kind=4), allocatable,dimension(:) :: dcsidxh
+            real(kind=4), allocatable,dimension(:) :: detadyh
+            real(kind=4), allocatable,dimension(:) :: dzitdzh
+            real(kind=4), allocatable,dimension(:) :: dcsidxh_gpu
+            real(kind=4), allocatable,dimension(:) :: detadyh_gpu
+            real(kind=4), allocatable,dimension(:) :: dzitdzh_gpu
+            real(kind=4) :: dpdx
+            real(kind=4) :: rhobulk
+            real(kind=4) :: ubulk
+            real(kind=4) :: tbulk
+            real(kind=4) :: target_tbulk
+            integer, allocatable,dimension(:) :: ibc
+            integer, allocatable,dimension(:) :: ibcnr
+            integer, allocatable,dimension(:) :: ibcnr_gpu
+            integer, parameter,optional :: nfmax=64
+            integer :: rand_start
+            real(kind=4) :: dftscaling
+            real(kind=4) dimension(3) :: xlen_df
+            real(kind=4), allocatable,dimension(:,:,:) :: vf_df
+            real(kind=4), allocatable,dimension(:,:,:) :: vf_df_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: rf
+            real(kind=4), allocatable,dimension(:,:,:) :: rf_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: rfy
+            real(kind=4), allocatable,dimension(:,:,:) :: rfy_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: bx_df
+            real(kind=4), allocatable,dimension(:,:,:) :: by_df
+            real(kind=4), allocatable,dimension(:,:,:) :: bz_df
+            real(kind=4), allocatable,dimension(:,:,:) :: by_df_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: bz_df_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: amat_df
+            real(kind=4), allocatable,dimension(:,:,:) :: amat_df_gpu
+            real(kind=4) :: xrecyc
+            real(kind=4) :: betarecyc
+            integer :: ibrecyc
+            integer :: irecyc
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wrecyc_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: wrecycav_gpu
+            real(kind=4), allocatable,dimension(:) :: yplus_inflow
+            real(kind=4), allocatable,dimension(:) :: yplus_recyc
+            real(kind=4), allocatable,dimension(:) :: yplus_inflow_gpu
+            real(kind=4), allocatable,dimension(:) :: yplus_recyc_gpu
+            real(kind=4), allocatable,dimension(:) :: eta_inflow
+            real(kind=4), allocatable,dimension(:) :: eta_recyc
+            real(kind=4), allocatable,dimension(:) :: eta_inflow_gpu
+            real(kind=4), allocatable,dimension(:) :: eta_recyc_gpu
+            real(kind=4), allocatable,dimension(:) :: weta_inflow
+            real(kind=4), allocatable,dimension(:) :: weta_inflow_gpu
+            integer, allocatable,dimension(:) :: map_j_inn
+            integer, allocatable,dimension(:) :: map_j_out
+            integer, allocatable,dimension(:) :: map_j_inn_gpu
+            integer, allocatable,dimension(:) :: map_j_out_gpu
+            integer :: istat
+            integer :: itav
+            integer :: nstat
+            integer :: nstatloc
+            real(kind=4), allocatable,dimension(:,:,:) :: w_av
+            real(kind=4), allocatable,dimension(:,:,:) :: w_avzg
+            real(kind=4), allocatable,dimension(:,:) :: w_av_1d
+            real(kind=4), allocatable,dimension(:,:) :: w_avxzg
+            real(kind=4), allocatable,dimension(:) :: xstat
+            integer, allocatable,dimension(:) :: ixstat
+            integer, allocatable,dimension(:) :: igxstat
+            real(kind=4), allocatable,dimension(:,:,:) :: wmean
+            real(kind=4), allocatable,dimension(:,:,:) :: wmean_gpu
+            real(kind=4), allocatable,dimension(:) :: coeff_deriv1
+            real(kind=4), allocatable,dimension(:) :: coeff_deriv1_gpu
+            real(kind=4), allocatable,dimension(:) :: coeff_clap
+            real(kind=4), allocatable,dimension(:) :: coeff_clap_gpu
+            real(kind=4), allocatable,dimension(:) :: coeff_deriv1s
+            real(kind=4), allocatable,dimension(:) :: coeff_deriv1s_gpu
+            real(kind=4), allocatable,dimension(:) :: coeff_midpi
+            real(kind=4), allocatable,dimension(:) :: coeff_midpi_gpu
+            real(kind=4), allocatable,dimension(:,:) :: cx_midpi
+            real(kind=4), allocatable,dimension(:,:) :: cy_midpi
+            real(kind=4), allocatable,dimension(:,:) :: cz_midpi
+            real(kind=4), allocatable,dimension(:,:) :: cx_midpi_gpu
+            real(kind=4), allocatable,dimension(:,:) :: cy_midpi_gpu
+            real(kind=4), allocatable,dimension(:,:) :: cz_midpi_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf1s_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf2s_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf3s_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf4s_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf5s_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf6s_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf1r_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf2r_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf3r_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf4r_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf5r_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf6r_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf1s_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf2s_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf3s_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf4s_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf5s_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf6s_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf1r_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf2r_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf3r_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf4r_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf5r_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf6r_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf1s_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf2s_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf3s_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf4s_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf5s_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf6s_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf1r_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf2r_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf3r_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf4r_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf5r_gpu
+            logical, allocatable,dimension(:,:,:) :: ducbuf6r_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf1s
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf2s
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf3s
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf4s
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf5s
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf6s
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf1r
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf2r
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf3r
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf4r
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf5r
+            real(kind=4), allocatable,dimension(:,:,:,:) :: wbuf6r
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf1s
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf2s
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf3s
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf4s
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf5s
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf6s
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf1r
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf2r
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf3r
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf4r
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf5r
+            real(kind=4), allocatable,dimension(:,:,:) :: divbuf6r
+            logical, allocatable,dimension(:,:,:) :: ducbuf1s
+            logical, allocatable,dimension(:,:,:) :: ducbuf2s
+            logical, allocatable,dimension(:,:,:) :: ducbuf3s
+            logical, allocatable,dimension(:,:,:) :: ducbuf4s
+            logical, allocatable,dimension(:,:,:) :: ducbuf5s
+            logical, allocatable,dimension(:,:,:) :: ducbuf6s
+            logical, allocatable,dimension(:,:,:) :: ducbuf1r
+            logical, allocatable,dimension(:,:,:) :: ducbuf2r
+            logical, allocatable,dimension(:,:,:) :: ducbuf3r
+            logical, allocatable,dimension(:,:,:) :: ducbuf4r
+            logical, allocatable,dimension(:,:,:) :: ducbuf5r
+            logical, allocatable,dimension(:,:,:) :: ducbuf6r
+            real(kind=4), allocatable,dimension(:,:) :: wallpfield
+            real(kind=4), allocatable,dimension(:,:) :: wallpfield_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: slicexy
+            real(kind=4), allocatable,dimension(:,:,:) :: slicexy_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: fhat
+            real(kind=4), allocatable,dimension(:,:,:,:) :: fhat_gpu
+            real(kind=4), allocatable,dimension(:,:,:) :: vf_df_old
+            real(kind=4), allocatable,dimension(:,:,:) :: uf
+            real(kind=4), allocatable,dimension(:,:) :: evmax_mat_yz
+            real(kind=4), allocatable,dimension(:) :: evmax_mat_y
+            real(kind=4), allocatable,dimension(:) :: bulk5g_gpu
+            real(kind=4), allocatable,dimension(:,:) :: rtrms_ib_gpu
+            real(kind=4), allocatable,dimension(:) :: rtrms_ib_1d_gpu
+            real(kind=4), allocatable,dimension(:,:,:,:) :: gplus_x
+            real(kind=4), allocatable,dimension(:,:,:,:) :: gminus_x
+            real(kind=4), allocatable,dimension(:,:,:,:) :: gplus_y
+            real(kind=4), allocatable,dimension(:,:,:,:) :: gminus_y
+            real(kind=4), allocatable,dimension(:,:,:,:) :: gplus_z
+            real(kind=4), allocatable,dimension(:,:,:,:) :: gminus_z
+            integer intent(hide) :: local_comm
+            integer intent(hide) :: mydev
+            integer(kind=cuda_stream_kind) intent(hide) :: stream1
+            integer(kind=cuda_stream_kind) intent(hide) :: stream2
+        end module mod_streams
+    end interface 
+end python module libstreams
+
+! This file was auto-generated with f2py (version:1.23.1).
+! See:
+! https://web.archive.org/web/20140822061353/http://cens.ioc.ee/projects/f2py2e

@@ -55,7 +55,7 @@ OBJ_FILES = alloc.o bcdf.o bcextr.o bcfree.o bc.o bcrecyc.o bcrelax.o bcshk.o bc
     writestatbl.o writestatchann.o writestat.o writestatzbl.o write_wallpressure.o visflx_stag.o \
 	write_probe_data.o bcblow.o
 
-f2pyfiles = alloc.F90 bcdf.F90 bcextr.F90 bcfree.F90 bc.F90 bcrecyc.F90 bcrelax.F90 bcshk.F90 bcswap.F90 \
+STATIC_FILES = alloc.F90 bcdf.F90 bcextr.F90 bcfree.F90 bc.F90 bcrecyc.F90 bcrelax.F90 bcshk.F90 bcswap.F90 \
     bcwall.F90 bcwall_pl.F90 bcwall_staggered.F90 check_input.F90 computeav.F90 computemetrics.F90 \
     computeresidual.F90 compute_coeff_xyz_midpi.F90 constants.F90 df_par.F90 digital_filtering_util.F90 \
     finalize.F90 generategrid.F90 generateinflowrand.F90 generatewmean_channel.F90 \
@@ -66,9 +66,9 @@ f2pyfiles = alloc.F90 bcdf.F90 bcextr.F90 bcfree.F90 bc.F90 bcrecyc.F90 bcrelax.
     writestatbl.F90 writestatchann.F90 writestat.F90 writestatzbl.F90 write_wallpressure.F90 visflx_stag.F90 \
 	write_probe_data.F90 bcblow.F90 
 
-f2pyfiles_mods = mod_streams.F90 mod_sys.F90 euler.F90
+STATIC_MODS = mod_streams.F90 mod_sys.F90 euler.F90
 
-f2pyfiles_main = main.F90
+STATIC_MAIN = main.F90
 
 
 # -- bc_constant_input.o bcblow.o
@@ -99,7 +99,7 @@ $(EXEC): $(OBJS) Makefile $(wildcard makefile.inc)
 	$(CXX) $(PRECFLAGS) $(INCLUDE) -O2 -c $< -o $@
 
 static:
-	mpifort $(f2pyfiles_mods) $(f2pyfiles) $(f2pyfiles_main) -o $(EXEC)
+	mpifort $(STATIC_MODS) $(STATIC_FILES) $(STATIC_MAIN) -o $(EXEC)
 
 f2py:
 	#rm libstreams.*
