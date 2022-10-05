@@ -1,9 +1,3 @@
-subroutine wrap_bc()
-    use mod_streams
-
-    call bc(1)
-end subroutine
-
 subroutine wrap_startmpi()
     call startmpi()
 end subroutine
@@ -26,6 +20,7 @@ end subroutine
 
 subroutine wrap_finalize()
     use mod_streams
+
     call finalize()
     call mpi_finalize(iermpi)
 end subroutine
