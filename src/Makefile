@@ -98,13 +98,17 @@ $(EXEC): $(OBJS) Makefile $(wildcard makefile.inc)
 %.o:%.cxx Makefile $(wildcard makefile.inc)
 	$(CXX) $(PRECFLAGS) $(INCLUDE) -O2 -c $< -o $@
 
+%.o:%.F90 Makefile $(wildcard makefile.inc)
+	$(FC) $(PRECFLAGS) $(INCLUDE) $(OLEVEL) $(SHARED) -c $< -o $@
+
 static:
 	mpifort $(STATIC_MODS) $(STATIC_FILES) $(STATIC_MAIN) -o $(EXEC)
 
 f2py:
-	f2py mod_streams.F90 -m libstreams -h mod_streams.pyf --overwrite-signature
-	f2py --f90exec="mpifort" --f77exec="mpifort" -c mod_streams.o mod_sys.o euler.o $(OBJ_FILES) min_api.F90 -m libstreams $(F2PYFLAGS)
+	mpifort -E mod_streams.F90 -o mod_streams_pre.F90
+	f2py mod_streams_pre.F90 -m libstreams -h mod_streams.pyf --overwrite-signature
+	f2py --f90exec="mpifort" --f77exec="mpifort" -c mod_streams_pre.F90 mod_sys.o euler.o $(OBJ_FILES) min_api.F90 -m libstreams $(F2PYFLAGS)
 
 .PHONY: clean
 clean:
-	$(RM) $(EXEC) $(MAIN) $(OBJS) $(OBJ_MODS) $(GRID) *.mod cfz_*.dat *.vtr *.q *.csv *.prof *.bin cf_*.dat d*g.dat *.xyz wavplot_*.dat csv_data/* spans/* *.vtk plotxy*.dat x.dat y.dat z.dat
+	$(RM) $(EXEC) $(MAIN) $(OBJS) $(OBJ_MODS) $(GRID) *.mod cfz_*.dat *.vtr *.q *.csv *.prof *.bin cf_*.dat d*g.dat *.xyz wavplot_*.dat csv_data/* spans/* *.vtk plotxy*.dat x.dat y.dat z.dat mod_streams_pre.F90 mod_streams.pyf

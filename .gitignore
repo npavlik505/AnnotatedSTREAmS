@@ -46,3 +46,5 @@ src/frames/
 src/vtks/
 src/frames/*
 src/vtks/*
+
+build/*
