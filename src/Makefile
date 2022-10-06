@@ -24,8 +24,6 @@ ifeq (${COMPILE},"nvfortran") # mpif90 shipped with PGI compiler
     FC = mpif90
     ifeq (${MODE},"opt") 
         OLEVEL = -O3 -Mcuda=cuda11.5 -DUSE_CUDA -DCUDA_ASYNC
-		F2PYFLAGS = --f90flags="-Mcuda=cuda11.5 -DUSE_CUDA -DCUDA_ASYNC -fPIC"
-		#F2PYFLAGS = --f90flags="-Mcuda=cuda11.5 -DUSE_CUDA -DCUDA_ASYNC -fPIC"
     else
         OLEVEL = -Mcuda=ccall -DUSE_CUDA -DCUDA_ASYNC -g -DNOCUDAAWAREMPI
     endif
@@ -78,7 +76,7 @@ STATIC_MAIN = main.F90
 OBJ_MODS = mod_streams.o mod_sys.o euler.o
 OBJS = $(OBJ_MODS) $(OBJ_FILES) $(MAIN)
 EXEC = streams.exe
-LDFLAGS = 
+#LDFLAGS = 
 SHARED = -fPIC
 
 #----------------------------------------------------------------------
@@ -105,7 +103,7 @@ static:
 
 f2py:
 	f2py mod_streams.F90 -m libstreams -h mod_streams.pyf --overwrite-signature
-	f2py --f90exec="mpifort" --f77exec="mpifort" -c mod_streams.F90 mod_sys.o euler.o $(OBJ_FILES) min_api.F90 /usr/lib/x86_64-linux-gnu/libpython3.8.so -m libstreams $(F2PYFLAGS)
+	f2py --f90exec="mpifort" --f77exec="mpifort" -c mod_streams.o mod_sys.o euler.o $(OBJ_FILES) min_api.F90 -m libstreams $(F2PYFLAGS)
 
 .PHONY: clean
 clean:
