@@ -20,9 +20,10 @@ endif
 # singularity build nvhpc_21.1_devel.sif docker://nvcr.io/nvidia/nvhpc:21.1-devel-cuda_multi-ubuntu20.04
 # singularity shell --nv nvhpc_21.1_devel.sif
 ifeq (${COMPILE},"nvfortran") # mpif90 shipped with PGI compiler
-	#FC = mpifort # precompiled mpifort included with nvidia hpc
-    FC = mpif90
+    FC = mpifort
+
     ifeq (${MODE},"opt") 
+		# everything after async is bonus, not sure if required
         OLEVEL = -O3 -Mcuda=cuda11.5 -DUSE_CUDA -DCUDA_ASYNC
     else
         OLEVEL = -Mcuda=ccall -DUSE_CUDA -DCUDA_ASYNC -g -DNOCUDAAWAREMPI
@@ -105,9 +106,7 @@ static:
 	mpifort $(STATIC_MODS) $(STATIC_FILES) $(STATIC_MAIN) -o $(EXEC)
 
 f2py:
-	mpifort -E mod_streams.F90 -o mod_streams_pre.F90
-	f2py mod_streams_pre.F90 -m libstreams -h mod_streams.pyf --overwrite-signature
-	f2py --f90exec="mpifort" --f77exec="mpifort" -c mod_streams_pre.F90 mod_sys.o euler.o $(OBJ_FILES) min_api.F90 -m libstreams $(F2PYFLAGS)
+	f2py --verbose --f90exec="mpifort" --f77exec="mpifort" -c mod_streams.F90 mod_sys.o euler.o $(OBJ_FILES) min_api.F90 -m libstreams
 
 .PHONY: clean
 clean:
