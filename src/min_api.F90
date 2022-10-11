@@ -24,3 +24,11 @@ subroutine wrap_finalize()
     call finalize()
     call mpi_finalize(iermpi)
 end subroutine
+
+subroutine wrap_copy_gpu_to_cpu()
+    call copy_gpu_to_cpu()
+end subroutine
+
+subroutine wrap_copy_cpu_to_gpu()
+    call copy_cpu_to_gpu()
+end subroutine

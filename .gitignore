@@ -48,3 +48,6 @@ src/frames/*
 src/vtks/*
 
 build/*
+**/*.pyf
+src/mod_streams_pre.F90
+**/__pycache__
