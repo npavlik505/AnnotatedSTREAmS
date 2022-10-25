@@ -53,7 +53,7 @@ subroutine manage_solver
  endif
 
  if (savespanaverage) then
-    call write_span_averaged
+    !call write_span_averaged
  endif
 !
 !Writing fields

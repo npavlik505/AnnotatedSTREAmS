@@ -68,6 +68,13 @@ module mod_streams
  real(mykind) :: rtrms
  real(mykind), dimension(0:nsolmax) :: tsol, tsol_restart
  real(mykind) :: dtsave, dtsave_restart
+
+ !f2py real*8 :: dt
+ real(mykind) :: dt
+
+ !f2py real*8 :: tauw_save
+ real(mykind) :: tauw_save
+
  ! the number of solver steps between outputting probe information / span average information
  integer :: save_probe_steps, save_span_average_steps
  ! override the default boundary condition on the bottom surface for SBLI conditions
@@ -98,6 +105,7 @@ module mod_streams
  character(6) :: stat_io
 !
 ! Vector of conservative variables and fluxes
+!f2py real*8, dimension(:,:,:,:), allocatable :: w,fl,fln
  real(mykind), dimension(:,:,:,:), allocatable :: w,fl,fln
  real(mykind), dimension(:,:,:,:), allocatable :: w_order
  real(mykind), dimension(:,:,:,:), allocatable :: w_gpu,fl_gpu,fln_gpu

@@ -48,7 +48,7 @@ class Dataset():
             self.dset[self.step_number, :, start_slice:end_slice, :, :] = array
 
         # writing 3D scalar fields (partial writes by each mpi process)
-        elif self.dim == 3 and self.split_idx == 0:
+        elif self.dim == 3 and self.split_idx == 1:
             # find out the position that we are writing to
             split_size = np.size(array,self.split_idx)
             start_slice = split_size * self.rank
@@ -56,7 +56,7 @@ class Dataset():
 
             #print(f"writing to {start_slice}:{end_slice}")
 
-            self.dset[self.step_number, start_slice:end_slice, :, :] = array
+            self.dset[self.step_number, :, start_slice:end_slice, :] = array
         
         # writing velocity gradient
         elif self.dim == 5 and self.split_idx == 2:
