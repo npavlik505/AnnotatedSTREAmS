@@ -72,8 +72,9 @@ module mod_streams
  !f2py real*8 :: dt
  real(mykind) :: dt
 
- !f2py real*8 :: tauw_save
- real(mykind) :: tauw_save
+ ! this is the shear stress along the x axis
+ !f2py real*8, dimension(:), allocatable :: tauw_x
+ real(mykind), dimension(:), allocatable :: tauw_x
 
  ! the number of solver steps between outputting probe information / span average information
  integer :: save_probe_steps, save_span_average_steps
