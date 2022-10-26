@@ -5,8 +5,6 @@ end subroutine
 subroutine wrap_setup()
     use mod_streams, only: tauw_x
     call setup()
-
-    write(*,*) shape(tauw_x)
 end subroutine
 
 subroutine wrap_init_solver()
@@ -49,6 +47,10 @@ subroutine wrap_tauw_calculate()
     real(mykind) :: rmuw
     real(mykind) :: tauw
 
+    ! if this does not get called, w_av is not initialized
+    ! correctly and the shear stress is NaN
+    call stats2d()
+
     if (ncoords(3) == 0) then
 !
         do j = 1, ny
@@ -62,9 +64,6 @@ subroutine wrap_tauw_calculate()
 ! Mean boundary layer properties
 !
         do i = 1, nx
-            if (masterproc) then
-                write(*,*) "executing shear stress calculation", i
-            endif
             dudyw = (-22._mykind*ufav(i, 1) + 36._mykind*ufav(i, 2) - 18._mykind*ufav(i, 3) + 4._mykind*ufav(i, 4))/12._mykind
             dy = (-22._mykind*y(1) + 36._mykind*y(2) - 18._mykind*y(3) + 4._mykind*y(4))/12._mykind
             dudyw = dudyw/dy
@@ -74,11 +73,6 @@ subroutine wrap_tauw_calculate()
             ! store shear stress information in the mod_streams array to 
             ! be read in the output file
             tauw_x(i) = tauw
-
-            if (masterproc) then
-                write(*,*) "tauw_x(i) = ", tauw
-                write(*,*) shape(tauw_x)
-            endif
         end do
     end if
 !

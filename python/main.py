@@ -20,7 +20,6 @@ with open("/input/input.json", "r") as f:
     json_data = json.load(f)
     config = Config.from_json(json_data)
 
-
 def hprint(*args):
     if is_master:
         print(*args)
@@ -39,7 +38,6 @@ def calculate_span_averages(span_average, temp_field, streams_data):
     span_average[0, :, :] = np.sum(streams_data[0, :, :, :], axis=2, out=span_average[0, :, :])
     span_average[0, :, :] /= config.grid.nz
 
-
 streams.wrap_setup()
 
 # initialize files
@@ -52,6 +50,7 @@ span_average_shape = [config.grid.nx, config.grid.ny]
 numwrites = int(config.temporal.num_iter / config.temporal.span_average_io_steps)
 velocity_dset  = flowfields.create_dataset("velocity", 1, [5, *grid_shape], 1)
 span_average_dset = flowfields.create_dataset("span_average", numwrites, [5, *span_average_shape], 1)
+shear_stress_dset = flowfields.create_dataset("shear_stress", numwrites, [config.grid.nx], 0)
 
 # now the main solver loop
 streams.wrap_init_solver()
@@ -67,6 +66,11 @@ for i in range(config.temporal.num_iter):
         calculate_span_averages(span_average, temp_field, streams_data_slice)
 
         span_average_dset.write_array(span_average)
+
+        # also write shear stress information
+        streams.wrap_tauw_calculate()
+        shear_stress_dset.write_array(streams.mod_streams.tauw_x)
+        print("finished tauw calculations")
 
 # writes the full array out to as the final exit condition
 streams.wrap_copy_gpu_to_cpu()

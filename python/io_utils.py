@@ -58,13 +58,13 @@ class Dataset():
 
             self.dset[self.step_number, :, start_slice:end_slice, :] = array
         
-        # writing velocity gradient
-        elif self.dim == 5 and self.split_idx == 2:
+        # writing a 1D array long the x axis
+        elif self.dim == 1 and self.split_idx == 0:
             split_size = np.size(array,self.split_idx)
             start_slice = split_size * self.rank
             end_slice = start_slice + split_size
 
-            self.dset[self.step_number, :, :, start_slice:end_slice, :, :] = array
+            self.dset[self.step_number, start_slice:end_slice] = array
 
         # writing spectra arrays
         elif self.dim == 2 and self.split_idx < 0:
