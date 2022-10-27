@@ -6,6 +6,7 @@ import h5py
 from mpi4py import MPI
 import numpy as np
 from typing import Tuple, Optional, List, Any
+from abc import ABC, abstractmethod
 
 class Group():
     def __init__(self, group: h5py.Group, rank: int):
@@ -14,70 +15,6 @@ class Group():
 
     def write_attr(self, attr: str, value: Any):
         self.group[attr] = value
-
-class Dataset():
-    def __init__(self, dset: h5py.Dataset, num_writes:int, array_shape: List[int], mpi_split_idx: int, rank: int):
-        self.num_writes = num_writes
-        self.step_number = 0
-        self.split_idx = mpi_split_idx
-        self.dim = len(array_shape)
-        self.rank = rank
-
-        self.dset = dset
-
-    def write_array(self, array: np.ndarray):
-        # ensure we are not overwriting on the indicies.
-        # if we are, we will get a nicer error than h5 will provide
-        if self.step_number >= self.num_writes:
-            import warnings
-            if MPI.COMM_WORLD.Get_rank() == 0:
-                warnings.warn(f"attempted to write {self.step_number+1} values to velocity h5 file, when constructed for {self.num_writes} writes - skipping this write", RuntimeWarning)
-            return None
-        
-        if self.dim != len(array.shape):
-            raise ValueError(f"reported dimension ({self.dim}) in initialization is different from argument `array` {len(array.shape)}")
-
-        # writing 3D vector fields (partial writes by each mpi process)
-        if self.dim == 4 and self.split_idx == 1:
-            # find out the position that we are writing to
-            split_size = np.size(array,self.split_idx)
-            start_slice = split_size * self.rank
-            end_slice = start_slice + split_size
-
-            # (write step number, vector components ex: (u,v,w,), x data, y data, z data)
-            self.dset[self.step_number, :, start_slice:end_slice, :, :] = array
-
-        # writing 3D scalar fields (partial writes by each mpi process)
-        elif self.dim == 3 and self.split_idx == 1:
-            # find out the position that we are writing to
-            split_size = np.size(array,self.split_idx)
-            start_slice = split_size * self.rank
-            end_slice = start_slice + split_size
-
-            #print(f"writing to {start_slice}:{end_slice}")
-
-            self.dset[self.step_number, :, start_slice:end_slice, :] = array
-        
-        # writing a 1D array long the x axis
-        elif self.dim == 1 and self.split_idx == 0:
-            split_size = np.size(array,self.split_idx)
-            start_slice = split_size * self.rank
-            end_slice = start_slice + split_size
-
-            self.dset[self.step_number, start_slice:end_slice] = array
-
-        # writing spectra arrays
-        elif self.dim == 2 and self.split_idx < 0:
-            self.dset[self.step_number, :] = array
-
-        # writing timesteps
-        elif self.dim == 1 and self.split_idx < 0:
-            self.dset[self.step_number, :] = array
-
-        else:
-            raise ValueError(f"unhandled dimension {self.dim} and mpi split along axis {self.split_idx}")
-
-        self.step_number += 1;
 
 # Write a h5 file using MPI
 #
@@ -94,15 +31,6 @@ class IoFile:
 
         self.file = h5py.File(filename, 'w', driver='mpio', comm = MPI.COMM_WORLD)
 
-    # mpi_split_idx: in the array you send to write to the HDF5 file, which 0-based index is the MPI data 
-    #   divided upon? For example, streams is (ideally) portioned by MPI along the x-axis, so if you have a vector
-    #   field (3, nx, ny, nz), then mpi_split_idx = 1 so that we tell the library that nx is where things are split upon
-    def create_dataset(self, name: str, num_writes: int, array_shape: List[int], mpi_split_idx: int) -> Dataset:
-
-        dataset = self.file.create_dataset(name, (num_writes, *array_shape))
-
-        return Dataset(dataset, num_writes, array_shape, mpi_split_idx, self.rank)
-
     def create_group(self, name: str) -> Group:
         group = self.file.create_group(name)
         return Group(group, self.rank)
@@ -111,34 +39,148 @@ class IoFile:
     def close(self):
         self.file.close()
 
-def write_initial_condition(base_path: str, velocity: np.ndarray, packed_spec: np.ndarray):
-    VALIDATE_IC_WRITING = False
+class ExportDataset(ABC):
+    @abstractmethod
+    def __init__(self, file: IoFile, shape: List[int], num_writes: int, name: str, rank: int):
+        self._step_number = 0
+        self._num_writes = num_writes
+        self._dim = len(shape)
 
-    # statement for validating the writing of the initial condition
-    if VALIDATE_IC_WRITING:
-        array = np.zeros(velocity.shape)
-        proc = MPI.COMM_WORLD.rank
-        base_number = proc * 3
-        array[0, :, :, :] = base_number
-        array[1, :, :, :] = base_number + 1
-        array[2, :, :, :] = base_number + 2
+    @abstractmethod
+    def write_array(self, array: np.ndarray):
+        pass
 
-    vec, _nx, ny, nz = velocity.shape
-    # we know what the shape should be here globally,
-    # which is not reflected by array.shape
+    def step_number(self) -> int:
+        return self._step_number
 
-    shape = [vec, ny, ny, nz]
+    def inc_step_number(self):
+        self._step_number += 1
 
-    h5_path = f"{base_path}/initial_condition.h5"
-    f = IoFile(h5_path)
+    def check_can_write(self, array: np.ndarray) -> bool:
+        if self._step_number >= self._num_writes:
+            import warnings
+            if MPI.COMM_WORLD.Get_rank() == 0:
+                warnings.warn(f"attempted to write {self._step_number+1} values to velocity h5 file, when constructed for {self._num_writes} writes - skipping this write", RuntimeWarning)
+            return False
+        
+        if self._dim != len(array.shape):
+            raise ValueError(f"reported dimension ({self._dim}) in initialization is different from argument `array` {len(array.shape)}")
 
-    velocity_dset = f.create_dataset("velocity", 1, shape, 1)
-    velocity_dset.write_array(velocity)
+        return True
 
-    assert(len(packed_spec.shape) == 2)
+# Used when exporting a vector field HDF5 file with the MPI split along exclusively the x-axis
+#
+# input arrays to `.write_array()` should be dimension 4 (<vector component>, x, ,y, z)
+# and the output arrays from this class will be dimension 5 (<timestep write>, <vector component>, x, y, z)
+class VectorField3D(ExportDataset):
+    # the shape here must be for the overall field, not just the data contained on this process
+    def __init__(self, file: IoFile, shape: List[int], num_writes: int, name: str, rank: int):
+        pass
+        self.dset = file.file.create_dataset(name, (num_writes, *shape))
+        self.rank = rank
 
-    spectra_dset = f.create_dataset("spectra", 1, list(packed_spec.shape), -1)
-    spectra_dset.write_array(packed_spec)
+        assert(len(shape) == 4)
 
-    f.close()
+        # initialize base class so we can use their stepper functionality
+        super(VectorField3D, self).__init__(file, shape, num_writes, name, rank)
+
+    def write_array(self, array: np.ndarray):
+        if not self.check_can_write(array):
+            return None
+
+        # the input array has the form
+        # [
+        #       <u,v,w,etc>
+        #       x position <------ IDX 1
+        #       y position
+        #       z position
+        # ]
+        # so we should only write to the slice of the HDF5 file that contains
+        # our data range in this area
+        MPI_SPLIT_IDX = 1
+
+        split_size = np.size(array,MPI_SPLIT_IDX)
+        start_slice = split_size * self.rank
+        end_slice = start_slice + split_size
+
+        # (write step number, vector components ex: (u,v,w,), x data, y data, z data)
+        self.dset[self.step_number(), :, start_slice:end_slice, :, :] = array
+
+        self.inc_step_number()
+
+# Used when exporting a 2D vector field HDF5 file with the MPI split along exclusively the x-axis
+#
+# input arrays to `.write_array()` should be dimension 3 (<vector component>, x, ,y)
+# and the output arrays from this class will be dimension 4 (<timestep write>, <vector component>, x, y)
+class VectorFieldXY2D(ExportDataset):
+    # the shape here must be for the overall field, not just the data contained on this process
+    def __init__(self, file: IoFile, shape: List[int], num_writes: int, name: str, rank: int):
+        pass
+        self.dset = file.file.create_dataset(name, (num_writes, *shape))
+        self.rank = rank
+
+        assert(len(shape) == 3)
+
+        # initialize base class so we can use their stepper functionality
+        super(VectorFieldXY2D, self).__init__(file, shape, num_writes, name, rank)
+
+    def write_array(self, array: np.ndarray):
+        if not self.check_can_write(array):
+            return None
+
+        # the input array has the form
+        # [
+        #       <u,v,w,etc>
+        #       x position <------ IDX 1
+        #       y position
+        # ]
+        # so we should only write to the slice of the HDF5 file that contains
+        # our data range in this area
+        MPI_SPLIT_IDX = 1
+
+        split_size = np.size(array,MPI_SPLIT_IDX)
+        start_slice = split_size * self.rank
+        end_slice = start_slice + split_size
+
+        # (write step number, vector components ex: (u,v,w,), x data, y data, )
+        self.dset[self.step_number(), :, start_slice:end_slice, :] = array
+
+        self.inc_step_number()
+
+# Used when exporting a 1D scalar field HDF5 file with the MPI split along exclusively the x-axis
+#
+# input arrays to `.write_array()` should be dimension 3 (<vector component>, x, ,y)
+# and the output arrays from this class will be dimension 4 (<timestep write>, <vector component>, x, y)
+class ScalarFieldX1D(ExportDataset):
+    # the shape here must be for the overall field, not just the data contained on this process
+    def __init__(self, file: IoFile, shape: List[int], num_writes: int, name: str, rank: int):
+        pass
+        self.dset = file.file.create_dataset(name, (num_writes, *shape))
+        self.rank = rank
+
+        assert(len(shape) == 1)
+
+        # initialize base class so we can use their stepper functionality
+        super(ScalarFieldX1D, self).__init__(file, shape, num_writes, name, rank)
+
+    def write_array(self, array: np.ndarray):
+        if not self.check_can_write(array):
+            return None
+
+        # the input array has the form
+        # [
+        #       x <------ IDX 0
+        # ]
+        # so we should only write to the slice of the HDF5 file that contains
+        # our data range in this area
+        MPI_SPLIT_IDX = 0
+
+        split_size = np.size(array,MPI_SPLIT_IDX)
+        start_slice = split_size * self.rank
+        end_slice = start_slice + split_size
+
+        # (write step number, vector components ex: (u,v,w,), x data, y data, )
+        self.dset[self.step_number(), start_slice:end_slice] = array
+
+        self.inc_step_number()
 
