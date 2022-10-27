@@ -46,6 +46,8 @@ class ExportDataset(ABC):
         self._num_writes = num_writes
         self._dim = len(shape)
 
+        self._name = name
+
     @abstractmethod
     def write_array(self, array: np.ndarray):
         pass
@@ -60,7 +62,7 @@ class ExportDataset(ABC):
         if self._step_number >= self._num_writes:
             import warnings
             if MPI.COMM_WORLD.Get_rank() == 0:
-                warnings.warn(f"attempted to write {self._step_number+1} values to velocity h5 file, when constructed for {self._num_writes} writes - skipping this write", RuntimeWarning)
+                warnings.warn(f"attempted to write {self._step_number+1} values to {self._name} dataset h5 file, when constructed for {self._num_writes} writes - skipping this write", RuntimeWarning)
             return False
         
         if self._dim != len(array.shape):
@@ -184,3 +186,27 @@ class ScalarFieldX1D(ExportDataset):
 
         self.inc_step_number()
 
+# Used when exporting a 1D scalar field HDF5 file with the MPI split along exclusively the x-axis
+#
+# input arrays to `.write_array()` should be dimension 3 (<vector component>, x, ,y)
+# and the output arrays from this class will be dimension 4 (<timestep write>, <vector component>, x, y)
+class Scalar1D(ExportDataset):
+    # the shape here must be for the overall field, not just the data contained on this process
+    def __init__(self, file: IoFile, shape: List[int], num_writes: int, name: str, rank: int):
+        pass
+        self.dset = file.file.create_dataset(name, (num_writes))
+        self.rank = rank
+
+        assert(len(shape) == 1)
+
+        # initialize base class so we can use their stepper functionality
+        super(Scalar1D, self).__init__(file, shape, num_writes, name, rank)
+
+    def write_array(self, array: np.ndarray):
+        if not self.check_can_write(array):
+            return None
+
+        # write the single scalar value to the output
+        self.dset[self.step_number()] = array
+
+        self.inc_step_number()

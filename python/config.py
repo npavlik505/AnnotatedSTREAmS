@@ -58,12 +58,18 @@ class Mpi():
         return Mpi(x_split, z_split)
 
 class Temporal():
-    def __init__(self, num_iter: int, cfl: float, dt_control: int, print_control: int, io_type: int, span_average_io_steps: int):
+    def __init__(self, num_iter: int, cfl: float, dt_control: int, print_control: int, io_type: int, span_average_io_steps: int, full_flowfield_io_steps: Optional[int], fixed_dt: Optional[float]):
         self.num_iter     = num_iter 
         self.cfl          = cfl
         self.dt_control   = dt_control 
         self.print_control= print_control
         self.io_type      = io_type
+
+        # number of steps between outputting full 3D vectorfields of the flowfield
+        self.full_flowfield_io_steps = full_flowfield_io_steps
+
+        # (optional) parameter of the fixed timestep
+        self.fixed_dt = fixed_dt
 
         # number of steps between writing writing the span average of all the rho / rhou / rhov / rhow/ energy
         self.span_average_io_steps = span_average_io_steps
@@ -76,9 +82,12 @@ class Temporal():
         print_control = 1
         io_type = 2
 
-        span_average_io_steps = json_config["span_average_io_steps"]
+        fixed_dt = json_config.get("fixed_dt")
 
-        return Temporal(num_iter, cfl, dt_control, print_control, io_type, span_average_io_steps)
+        span_average_io_steps = json_config["span_average_io_steps"]
+        full_flowfield_io_steps = json_config.get("python_flowfield_steps")
+
+        return Temporal(num_iter, cfl, dt_control, print_control, io_type, span_average_io_steps, full_flowfield_io_steps, fixed_dt)
 
 class Physics():
     def __init__(self, mach:float, reynolds_friction:float, temp_ratio: float, visc_type:int, Tref: float, turb_inflow: float ):

@@ -69,9 +69,6 @@ module mod_streams
  real(mykind), dimension(0:nsolmax) :: tsol, tsol_restart
  real(mykind) :: dtsave, dtsave_restart
 
- !f2py real*8 :: dt
- real(mykind) :: dt
-
  ! this is the shear stress along the x axis
  !f2py real*8, dimension(:), allocatable :: tauw_x
  real(mykind), dimension(:), allocatable :: tauw_x
@@ -121,6 +118,8 @@ module mod_streams
 ! 
 ! RK data
  real(mykind), dimension(3) :: gamvec,rhovec
+
+!f2py real*8 :: dtglobal,cfl,dtmin,alpdt,telaps,telaps0,alpdtold
  real(mykind) :: dtglobal,cfl,dtmin,alpdt,telaps,telaps0,alpdtold
  integer :: icyc,ncyc,ncyc0,nstep,nprint
 !
