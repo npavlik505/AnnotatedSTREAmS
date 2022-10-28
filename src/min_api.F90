@@ -27,9 +27,9 @@ subroutine wrap_finalize()
 end subroutine
 
 subroutine wrap_copy_gpu_to_cpu()
-    # this follows the calling convention used in 
-    # manage_solver.fF90, so I naive-ly just copy
-    # it here
+    ! this follows the calling convention used in 
+    ! manage_solver.fF90, so I naive-ly just copy
+    ! it here
     call updateghost()
     call prims()
     call copy_gpu_to_cpu()
