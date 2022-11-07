@@ -54,7 +54,9 @@ OBJ_FILES = alloc.o bcdf.o bcextr.o bcfree.o bc.o bcrecyc.o bcrelax.o bcshk.o bc
     setup.o solver.o startmpi.o stats.o step.o target_reystress.o tbforce.o updateghost.o utility.o utyibm.o \
     visflx.o writedf.o writefield.o writefieldvtk.o writegridplot3d.o writerst.o \
     writestatbl.o writestatchann.o writestat.o writestatzbl.o write_wallpressure.o visflx_stag.o \
-	write_probe_data.o bcblow.o min_api.o
+	write_probe_data.o bcblow.o
+
+PY_API_OBJS = min_api.o
 
 STATIC_FILES = alloc.F90 bcdf.F90 bcextr.F90 bcfree.F90 bc.F90 bcrecyc.F90 bcrelax.F90 bcshk.F90 bcswap.F90 \
     bcwall.F90 bcwall_pl.F90 bcwall_staggered.F90 check_input.F90 computeav.F90 computemetrics.F90 \
@@ -75,7 +77,7 @@ STATIC_MAIN = main.F90
 # -- bc_constant_input.o bcblow.o
 
 OBJ_MODS = mod_streams.o mod_sys.o euler.o
-OBJS = $(OBJ_MODS) $(OBJ_FILES) $(MAIN)
+OBJS = $(OBJ_MODS) $(OBJ_FILES) $(PY_API_OBJS) $(MAIN)
 EXEC = streams.exe
 #LDFLAGS = 
 SHARED = -fPIC
@@ -86,7 +88,7 @@ SHARED = -fPIC
 -include makefile.inc
 #----------------------------------------------------------------------
 
-$(EXEC): $(OBJS) Makefile $(wildcard makefile.inc)
+$(EXEC): $(OBJS) $(PY_API_OBJS) Makefile $(wildcard makefile.inc)
 	$(FC) $(PRECFLAGS) $(OLEVEL) -o $@ $(OBJS) $(FCLIBS) $(LDFLAGS)
 
 # script for compiling individual modules together

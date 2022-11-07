@@ -10,7 +10,7 @@ subroutine rk
  logical :: call2,call3
 !
  integer :: i,j,k,m,istep,ilat
- real(mykind) :: alp,gam,gamdt,rho,rhodt
+ real(mykind) :: alp,gam,gamdt,rho,rhodt, dt
  real(mykind) :: elapsed,startTiming,endTiming
 !
  lmax = iorder/2

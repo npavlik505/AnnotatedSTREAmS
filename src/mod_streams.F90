@@ -69,11 +69,9 @@ module mod_streams
  real(mykind), dimension(0:nsolmax) :: tsol, tsol_restart
  real(mykind) :: dtsave, dtsave_restart
 
- !f2py real*8 :: dt
- real(mykind) :: dt
-
- !f2py real*8 :: tauw_save
- real(mykind) :: tauw_save
+ ! this is the shear stress along the x axis
+ !f2py real*8, dimension(:), allocatable :: tauw_x
+ real(mykind), dimension(:), allocatable :: tauw_x
 
  ! the number of solver steps between outputting probe information / span average information
  integer :: save_probe_steps, save_span_average_steps
@@ -120,6 +118,8 @@ module mod_streams
 ! 
 ! RK data
  real(mykind), dimension(3) :: gamvec,rhovec
+
+!f2py real*8 :: dtglobal,cfl,dtmin,alpdt,telaps,telaps0,alpdtold
  real(mykind) :: dtglobal,cfl,dtmin,alpdt,telaps,telaps0,alpdtold
  integer :: icyc,ncyc,ncyc0,nstep,nprint
 !
