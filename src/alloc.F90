@@ -214,7 +214,8 @@ subroutine allocate_vars()
  allocate(wrecyc_gpu(ng,ny,nz,nv))
  allocate(wrecycav_gpu(ng,ny,nv))
 
- allocate(tauw_x(1:nx))
+allocate(tauw_x(1:nx))
+
 !
 endsubroutine allocate_vars
 

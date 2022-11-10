@@ -73,6 +73,34 @@ module mod_streams
  !f2py real*8, dimension(:), allocatable :: tauw_x
  real(mykind), dimension(:), allocatable :: tauw_x
 
+ ! this is a 2D array in (X,Z) that determines what the y velocity should be at each coordinate
+ ! it is of dimensions (nx_slot, nz_slot), and nx_slot,nz_slot are set on a per-mpi basis
+ ! meaning that they may be different depending on the location
+ !f2py real*8, dimension(:, :), allocatable :: blowing_bc_slot_velocity
+ real(mykind), dimension(:, :), allocatable :: blowing_bc_slot_velocity
+
+ !f2py intent(hide) :: blowing_bc_slot_velocity_gpu
+ real(mykind), dimension(:, :), allocatable :: blowing_bc_slot_velocity_gpu
+
+ ! nx_slot is the number of points in the x direction that will have the blowing boundary
+ ! condition
+ ! nz_slot is the number of points in the z direction that will have the blowing boundary
+ ! condition
+ ! x_start_slot is the location in x point at which the slot should start. If x_start_slot
+ ! is -1 then the current MPI process should NOT worry about writing any blowing slot information
+ ! since the slot has been placed in another MPI process domain
+
+ !f2py integer :: nx_slot, nz_slot, x_start_slot
+ integer :: nx_slot, nz_slot, x_start_slot
+
+ ! same as above (except they are positions instead of lengths), 
+ ! but not set on an MPI basis. Instead, these parameters are set 
+ ! from the config file and the correct `nx_slot`, `ny_slot`, `x_start_slot` are derived from
+ ! these parameters
+
+ !f2py integer :: slot_start_x_global, slot_end_x_global
+ integer :: slot_start_x_global, slot_end_x_global
+
  ! the number of solver steps between outputting probe information / span average information
  integer :: save_probe_steps, save_span_average_steps
  ! override the default boundary condition on the bottom surface for SBLI conditions
@@ -230,6 +258,8 @@ module mod_streams
  attributes(device) :: fhat_trans_gpu, fl_trans_gpu
  attributes(device) :: temperature_trans_gpu
  attributes(device) :: wv_gpu, wv_trans_gpu
+
+ attributes(device) :: blowing_bc_slot_velocity_gpu
 !
  ! TODO: this might be problematic
  !f2py intent(hide) :: local_comm, mydev

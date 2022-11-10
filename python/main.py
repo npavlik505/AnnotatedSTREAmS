@@ -85,8 +85,22 @@ dt_dset = io_utils.Scalar1D(trajectories, [1], config.temporal.num_iter, "dt", r
 # Main solver loop, we start time stepping until we are done
 #
 
+# if x_start_slot == -1 then we do not have a matrix
+# allocated on this MPI process
+has_slot = streams.mod_streams.x_start_slot != -1
+
 time = 0
 for i in range(config.temporal.num_iter):
+
+    # if we have a matrix, we can adjust the velocity of the blowing actuator
+    streams.wrap_copy_blowing_bc_to_cpu()
+
+    # WARNING: copying to GPU and copying to CPU must happen on ALL mpi procs
+    if has_slot:
+        streams.mod_streams.blowing_bc_slot_velocity[:, :] = 1.0
+
+    streams.wrap_copy_blowing_bc_to_gpu()
+
     streams.wrap_step_solver()
 
     time += streams.mod_streams.dtglobal

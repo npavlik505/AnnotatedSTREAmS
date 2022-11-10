@@ -39,6 +39,22 @@ subroutine wrap_copy_cpu_to_gpu()
     call copy_cpu_to_gpu()
 end subroutine
 
+! copy the array for the blowing BC 
+! CPU -> GPU
+!
+! this subroutine must be called on ALL mpi procs
+subroutine wrap_copy_blowing_bc_to_gpu()
+    call copy_blowing_bc_to_gpu()
+end subroutine
+
+! copy the array for the blowing BC 
+! GPU -> CPU
+!
+! this subroutine must be called on ALL mpi procs
+subroutine wrap_copy_blowing_bc_to_cpu()
+    call copy_blowing_bc_to_cpu()
+end subroutine
+
 ! calculate wall shear stress
 ! this subtoutine is a HEAVILY chopped down version of `writestatbl`
 ! in writestatbl.f90
