@@ -81,6 +81,12 @@ module mod_streams
  ! boundary condition integer (see bc.f90) to indicate that the bottom boundary
  ! of the SBLI case should be blowing
  integer, parameter :: blowing_sbli_boundary_condition = 11
+
+
+ ! dissipation_rate is calculated in dissipation.F90, subroutine dissipation_calculation
+!f2py real*8 :: dissipation_rate
+ real(mykind) :: dissipation_rate
+
  integer :: iflow
  integer :: idiski, ndim
  integer :: istore, istore_restart 

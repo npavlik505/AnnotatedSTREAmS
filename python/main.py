@@ -92,6 +92,9 @@ for i in range(config.temporal.num_iter):
     time += streams.mod_streams.dtglobal
     time_array[:] = time
 
+    streams.wrap_dissipation_calculation()
+    utils.hprint(f"dissipation rate is {streams.mod_streams.dissipation_rate}")
+
     if (i % config.temporal.span_average_io_steps) == 0:
         utils.hprint("writing span average to output")
         streams.wrap_copy_gpu_to_cpu()

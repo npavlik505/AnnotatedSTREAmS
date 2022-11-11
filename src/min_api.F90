@@ -82,3 +82,11 @@ subroutine wrap_tauw_calculate()
     end if
 !
 end subroutine
+
+! calculate dissipation rate. See inner subroutine documentation.
+! after calculation, the value is stored in `dissipation_rate` in mod_streams
+subroutine wrap_dissipation_calculation()
+    implicit none
+
+    call dissipation_calculation()
+end subroutine
