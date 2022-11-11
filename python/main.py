@@ -45,6 +45,7 @@ temp_field = np.zeros((config.nx_mpi(), config.ny_mpi(), config.nz_mpi()), dtype
 dt_array = np.zeros(1)
 time_array = np.zeros(1)
 dissipation_rate_array = np.zeros(1)
+energy_array = np.zeros(1)
 
 #
 # execute streams setup routines
@@ -79,6 +80,7 @@ span_average_dset = io_utils.VectorFieldXY2D(span_averages, [5, *span_average_sh
 shear_stress_dset = io_utils.ScalarFieldX1D(span_averages, [config.grid.nx], numwrites, "shear_stress", rank)
 span_average_time_dset = io_utils.Scalar1D(span_averages, [1], numwrites, "time", rank)
 dissipation_rate_dset = io_utils.Scalar1D(span_averages, [1], numwrites, "dissipation_rate", rank)
+energy_dset = io_utils.Scalar1D(span_averages, [1], numwrites, "energy", rank)
 
 # trajectories files
 dt_dset = io_utils.Scalar1D(trajectories, [1], config.temporal.num_iter, "dt", rank)
@@ -113,6 +115,11 @@ for i in range(config.temporal.num_iter):
         streams.wrap_dissipation_calculation()
         dissipation_rate_array[:] = streams.mod_streams.dissipation_rate
         dissipation_rate_dset.write_array(dissipation_rate_array)
+
+        # calculate energy on GPU and store the result
+        streams.wrap_energy_calculation()
+        energy_array[:] = streams.mod_streams.energy
+        energy_dset.write_array(energy_array)
 
     # save dt information for every step
     dt_array[:] = streams.mod_streams.dtglobal

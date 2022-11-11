@@ -90,3 +90,11 @@ subroutine wrap_dissipation_calculation()
 
     call dissipation_calculation()
 end subroutine
+
+! calculate energy. See inner subroutine documentation.
+! after calculation, the value is stored in `energy` in mod_streams
+subroutine wrap_energy_calculation()
+    implicit none
+
+    call energy_calculation()
+end subroutine

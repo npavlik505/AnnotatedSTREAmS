@@ -87,6 +87,10 @@ module mod_streams
 !f2py real*8 :: dissipation_rate
  real(mykind) :: dissipation_rate
 
+ ! energy is calculated in dissipation.F90, subroutine energy_calculation
+!f2py real*8 :: energy
+ real(mykind) :: energy 
+
  integer :: iflow
  integer :: idiski, ndim
  integer :: istore, istore_restart 
