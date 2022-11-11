@@ -44,6 +44,7 @@ span_average = np.zeros([5, config.nx_mpi(), config.ny_mpi()], dtype=np.float64)
 temp_field = np.zeros((config.nx_mpi(), config.ny_mpi(), config.nz_mpi()), dtype=np.float64)
 dt_array = np.zeros(1)
 time_array = np.zeros(1)
+dissipation_rate_array = np.zeros(1)
 
 #
 # execute streams setup routines
@@ -77,6 +78,7 @@ numwrites = int(math.ceil(config.temporal.num_iter / config.temporal.span_averag
 span_average_dset = io_utils.VectorFieldXY2D(span_averages, [5, *span_average_shape], numwrites, "span_average", rank)
 shear_stress_dset = io_utils.ScalarFieldX1D(span_averages, [config.grid.nx], numwrites, "shear_stress", rank)
 span_average_time_dset = io_utils.Scalar1D(span_averages, [1], numwrites, "time", rank)
+dissipation_rate_dset = io_utils.Scalar1D(span_averages, [1], numwrites, "dissipation_rate", rank)
 
 # trajectories files
 dt_dset = io_utils.Scalar1D(trajectories, [1], config.temporal.num_iter, "dt", rank)
@@ -92,9 +94,6 @@ for i in range(config.temporal.num_iter):
     time += streams.mod_streams.dtglobal
     time_array[:] = time
 
-    streams.wrap_dissipation_calculation()
-    utils.hprint(f"dissipation rate is {streams.mod_streams.dissipation_rate}")
-
     if (i % config.temporal.span_average_io_steps) == 0:
         utils.hprint("writing span average to output")
         streams.wrap_copy_gpu_to_cpu()
@@ -109,6 +108,11 @@ for i in range(config.temporal.num_iter):
 
         # write the time at which this data was collected
         span_average_time_dset.write_array(time_array)
+
+        # calculate dissipation rate on GPU and store the result
+        streams.wrap_dissipation_calculation()
+        dissipation_rate_array[:] = streams.mod_streams.dissipation_rate
+        dissipation_rate_dset.write_array(dissipation_rate_array)
 
     # save dt information for every step
     dt_array[:] = streams.mod_streams.dtglobal
