@@ -29,6 +29,27 @@ subroutine dissipation_calculation()
     do k = 1,nz
         do j = 1,ny
             do i = 1,nx
+                !
+                ! at i = 1 dx = 0 so the boundaries will be really wonky. 
+                ! the same happens for dy at j = 1, and for dz at k = 1
+                !
+                if (i == 1) then
+                    dx = (x_gpu(i+1) - x_gpu(i)) / 2
+                else
+                    dx = (x_gpu(i+1) - x_gpu(i-1)) / 2
+                endif
+
+                if (j == 1) then
+                    dy = (y_gpu(j+1) - y_gpu(j)) / 2
+                else
+                    dy = (y_gpu(j+1) - y_gpu(j-1)) / 2
+                endif
+
+                if (k == 1) then
+                    dz = (z_gpu(k+1) - z_gpu(k)) / 2
+                else
+                    dz = (z_gpu(k+1) - z_gpu(k-1)) / 2
+                endif
 
                 !
                 ! du/dx
@@ -50,9 +71,7 @@ subroutine dissipation_calculation()
                         w_gpu(i-2, j, k, 2) / w_gpu(i-2, j, k, 1) &
                     ) &
                 ) &
-                ! replace 12 * \Delta x by 6 * (2 \Delta x) since x can vary
-                ! with grid size (Without really looking at grid mesh generation
-                / ( 6 * ( x_gpu(i+1) - x_gpu(i-1)))
+                / ( 12 * dx)
 
                 !
                 ! dv/dy
@@ -74,9 +93,7 @@ subroutine dissipation_calculation()
                         w_gpu(i, j-2, k, 3) / w_gpu(i, j-2, k, 1) &
                     ) &
                 ) &
-                ! replace 12 * \Delta y by 6 * (2 \Delta y) since y can vary
-                ! with grid size (Without really looking at grid mesh generation
-                / ( 6 * ( y_gpu(j+1) - y_gpu(j-1)))
+                / ( 12 * dy)
 
                 !
                 ! dw/dz
@@ -98,22 +115,18 @@ subroutine dissipation_calculation()
                         w_gpu(i, j, k-2, 4) / w_gpu(i, j, k-2, 1) &
                     ) &
                 ) &
-                ! replace 12 * \Delta z by 6 * (2 \Delta z) since z can vary
-                ! with grid size (Without really looking at grid mesh generation
-                / ( 6 * ( z_gpu(k+1) - z_gpu(k-1)))
-
-                dx = (x_gpu(i-1) + x_gpu(i+1)) / 2
-                dy = (y_gpu(j-1) + y_gpu(j+1)) / 2
-                dz = (z_gpu(k-1) + z_gpu(k+1)) / 2
+                / ( 12 * dz)
 
                 dissipation_rate = dissipation_rate + &
-                    (dudx**2 + dvdy**2 + dwdz**2) * dx * dy * dz
+                    ((dudx**2 + dvdy**2 + dwdz**2) * dx * dy * dz)
             enddo
         enddo
     enddo
     !@cuf iercuda=cudaDeviceSynchronize()
 
     dissipation_rate = dissipation_rate / (rlx * rly * rlz)
+
+    !write(*, *) "dissipation rate", dissipation_rate
 
     ! sum all the values across MPI, store the result in mpi_dissipation_sum
     call MPI_REDUCE(dissipation_rate, mpi_dissipation_sum, 1, mpi_prec,  MPI_SUM, 0, MPI_COMM_WORLD, iermpi)
@@ -156,9 +169,9 @@ subroutine energy_calculation()
                 vv = w_gpu(i, j, k, 3) / rho
                 ww = w_gpu(i, j, k, 4) / rho
 
-                dx = (x_gpu(i-1) + x_gpu(i+1)) / 2
-                dy = (y_gpu(j-1) + y_gpu(j+1)) / 2
-                dz = (z_gpu(k-1) + z_gpu(k+1)) / 2
+                dx = (x_gpu(i+1) - x_gpu(i-1)) / 2
+                dy = (y_gpu(j+1) - y_gpu(j-1)) / 2
+                dz = (z_gpu(k+1) - z_gpu(k-1)) / 2
 
                 energy = energy + &
                     (uu**2 + vv**2 + ww**2) * dx * dy * dz

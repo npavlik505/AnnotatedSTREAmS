@@ -115,11 +115,14 @@ for i in range(config.temporal.num_iter):
         streams.wrap_dissipation_calculation()
         dissipation_rate_array[:] = streams.mod_streams.dissipation_rate
         dissipation_rate_dset.write_array(dissipation_rate_array)
+        utils.hprint(f"dissipation is {dissipation_rate_array[0]}")
 
         # calculate energy on GPU and store the result
         streams.wrap_energy_calculation()
         energy_array[:] = streams.mod_streams.energy
         energy_dset.write_array(energy_array)
+
+        utils.hprint(f"energy is {energy_array[0]}")
 
     # save dt information for every step
     dt_array[:] = streams.mod_streams.dtglobal
