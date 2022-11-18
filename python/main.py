@@ -62,6 +62,7 @@ streams.wrap_init_solver()
 flowfields = io_utils.IoFile("/distribute_save/flowfields.h5")
 span_averages = io_utils.IoFile("/distribute_save/span_averages.h5")
 trajectories = io_utils.IoFile("/distribute_save/trajectories.h5")
+mesh_h5 = io_utils.IoFile("/distribute_save/mesh.h5")
 
 grid_shape = [config.grid.nx, config.grid.ny, config.grid.nz]
 span_average_shape = [config.grid.nx, config.grid.ny]
@@ -78,12 +79,25 @@ flowfield_time_dset = io_utils.Scalar1D(flowfields, [1], flowfield_writes, "time
 numwrites = int(math.ceil(config.temporal.num_iter / config.temporal.span_average_io_steps))
 span_average_dset = io_utils.VectorFieldXY2D(span_averages, [5, *span_average_shape], numwrites, "span_average", rank)
 shear_stress_dset = io_utils.ScalarFieldX1D(span_averages, [config.grid.nx], numwrites, "shear_stress", rank)
-span_average_time_dset = io_utils.Scalar1D(span_averages, [1], numwrites, "time", rank)
-dissipation_rate_dset = io_utils.Scalar1D(span_averages, [1], numwrites, "dissipation_rate", rank)
-energy_dset = io_utils.Scalar1D(span_averages, [1], numwrites, "energy", rank)
+span_average_time_dset = io_utils.Scalar0D(span_averages, [1], numwrites, "time", rank)
+dissipation_rate_dset = io_utils.Scalar0D(span_averages, [1], numwrites, "dissipation_rate", rank)
+energy_dset = io_utils.Scalar0D(span_averages, [1], numwrites, "energy", rank)
 
 # trajectories files
-dt_dset = io_utils.Scalar1D(trajectories, [1], config.temporal.num_iter, "dt", rank)
+dt_dset = io_utils.Scalar0D(trajectories, [1], config.temporal.num_iter, "dt", rank)
+
+# mesh datasets
+x_mesh_dset = io_utils.Scalar1DX(mesh_h5, [config.grid.nx], 1, "x_grid", rank)
+y_mesh_dset = io_utils.Scalar1D(mesh_h5, [config.grid.ny], 1, "y_grid", rank)
+z_mesh_dset = io_utils.Scalar1D(mesh_h5, [config.grid.nz], 1, "z_grid", rank)
+
+x_mesh = streams.mod_streams.x[config.x_start():config.x_end()]
+y_mesh = streams.mod_streams.y[config.y_start():config.y_end()]
+z_mesh = streams.mod_streams.z[config.z_start():config.z_end()]
+
+x_mesh_dset.write_array(x_mesh)
+y_mesh_dset.write_array(y_mesh)
+z_mesh_dset.write_array(z_mesh)
 
 #
 # Main solver loop, we start time stepping until we are done

@@ -136,6 +136,7 @@ module mod_streams
 ! Coordinates and metric related quantities 
  integer :: jbgrid ! Parameter for grid stretching
  real(mykind) :: rlx,rly,rlz,rlywr,dyp_target
+!f2py real*8, dimension(:), allocatable :: x, y, z
  real(mykind), dimension(:), allocatable :: x,y,z,yn
  real(mykind), dimension(:), allocatable :: x_gpu,y_gpu,z_gpu,yn_gpu
  real(mykind), dimension(:), allocatable :: xg,yg,zg
