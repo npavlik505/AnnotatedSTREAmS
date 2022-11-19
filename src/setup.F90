@@ -30,6 +30,7 @@ subroutine setup
  if (masterproc) write(*,*) 'Initialize field'
  call init()
  call checkdt()
+ call generate_full_fdm_stencil()
 !===================================================
 !
 end subroutine setup

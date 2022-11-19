@@ -215,6 +215,11 @@ subroutine allocate_vars()
  allocate(wrecycav_gpu(ng,ny,nv))
 
  allocate(tauw_x(1:nx))
+
+ allocate(fdm_y_stencil_gpu(5, ny))
+ allocate(fdm_y_stencil(5, ny))
+ allocate(fdm_individual_stencil(0:1, 0:4, 0:4))
+ allocate(fdm_grid_points(0:4))
 !
 endsubroutine allocate_vars
 

@@ -87,6 +87,16 @@ module mod_streams
 !f2py real*8 :: dissipation_rate
  real(mykind) :: dissipation_rate
 
+ ! stencil for computing finite differences on the irregular y mesh
+!f2py real*8, dimension(:, :), allocatable :: fdm_y_stencil
+ real(mykind), dimension(:, :), allocatable :: fdm_y_stencil
+ real(mykind), dimension(:, :), allocatable :: fdm_y_stencil_gpu
+ ! the array we can re-use for calculating a 4th order accurate approximation for the first derivative
+ ! according to 
+ ! Generation of Finite Difference Formulas on Arbitrarily Spaced Grids (Fornberg, 1988)
+ real(mykind), dimension(:, :, :), allocatable :: fdm_individual_stencil
+ real(mykind), dimension(:), allocatable :: fdm_grid_points
+
  ! energy is calculated in dissipation.F90, subroutine energy_calculation
 !f2py real*8 :: energy
  real(mykind) :: energy 
@@ -241,6 +251,8 @@ module mod_streams
  attributes(device) :: fhat_trans_gpu, fl_trans_gpu
  attributes(device) :: temperature_trans_gpu
  attributes(device) :: wv_gpu, wv_trans_gpu
+
+ attributes(device) :: fdm_y_stencil_gpu
 !
  ! TODO: this might be problematic
  !f2py intent(hide) :: local_comm, mydev
