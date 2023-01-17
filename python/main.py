@@ -28,6 +28,7 @@ import io_utils
 import numpy as np
 from config import Config
 import utils
+import jet_actuator
 
 #
 # Load in config, initialize
@@ -72,7 +73,7 @@ else:
 velocity_dset = io_utils.VectorField3D(flowfields, [5, *grid_shape], flowfield_writes, "velocity", rank)
 flowfield_time_dset = io_utils.Scalar1D(flowfields, [1], flowfield_writes, "time", rank)
 
-# span average files 
+# span average files
 numwrites = int(math.ceil(config.temporal.num_iter / config.temporal.span_average_io_steps))
 span_average_dset = io_utils.VectorFieldXY2D(span_averages, [5, *span_average_shape], numwrites, "span_average", rank)
 shear_stress_dset = io_utils.ScalarFieldX1D(span_averages, [config.grid.nx], numwrites, "shear_stress", rank)
@@ -85,21 +86,12 @@ dt_dset = io_utils.Scalar1D(trajectories, [1], config.temporal.num_iter, "dt", r
 # Main solver loop, we start time stepping until we are done
 #
 
-# if x_start_slot == -1 then we do not have a matrix
-# allocated on this MPI process
-has_slot = streams.mod_streams.x_start_slot != -1
+actuator = jet_actuator.JetActuator(rank, config)
 
 time = 0
 for i in range(config.temporal.num_iter):
 
-    # if we have a matrix, we can adjust the velocity of the blowing actuator
-    streams.wrap_copy_blowing_bc_to_cpu()
-
-    # WARNING: copying to GPU and copying to CPU must happen on ALL mpi procs
-    if has_slot:
-        streams.mod_streams.blowing_bc_slot_velocity[:, :] = 1.0
-
-    streams.wrap_copy_blowing_bc_to_gpu()
+    actuator.set_amplitude(1.0)
 
     streams.wrap_step_solver()
 

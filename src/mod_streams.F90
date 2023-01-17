@@ -90,7 +90,7 @@ module mod_streams
  ! is -1 then the current MPI process should NOT worry about writing any blowing slot information
  ! since the slot has been placed in another MPI process domain
 
- !f2py integer :: nx_slot, nz_slot, x_start_slot
+!f2py integer :: nx_slot, nz_slot, x_start_slot
  integer :: nx_slot, nz_slot, x_start_slot
 
  ! same as above (except they are positions instead of lengths), 

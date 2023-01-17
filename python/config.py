@@ -109,13 +109,28 @@ class Physics():
 
         return Physics(mach, reynolds_friction, temp_ratio, visc_type, Tref, turb_inflow)
 
+class Jet():
+    def __init__(self, slot_start: int, slot_end: int):
+        self.slot_start = slot_start
+        self.slot_end = slot_end
+
+        self.has_slot = slot_start != -1
+
+    @staticmethod
+    def from_json(json_config: Dict[str, Any]):
+        slot_start = json_config["slot_start"]
+        slot_end = json_config["slot_end"]
+
+        return Jet(slot_start, slot_end)
+
 class Config():
-    def __init__(self, length: Length, grid: Grid, mpi: Mpi, temporal: Temporal, physics: Physics):
+    def __init__(self, length: Length, grid: Grid, mpi: Mpi, temporal: Temporal, physics: Physics, jet: Jet):
         self.length = length
         self.grid = grid
         self.mpi = mpi
         self.temporal = temporal
         self.physics = physics
+        self.jet = jet
 
     @staticmethod
     def from_json(json_config: Dict[str, Any]):
@@ -124,8 +139,9 @@ class Config():
         mpi = Mpi.from_json(json_config)
         temporal = Temporal.from_json(json_config)
         physics = Physics.from_json(json_config)
+        jet = Jet.from_json(json_config)
 
-        return Config(length, grid, mpi, temporal, physics)
+        return Config(length, grid, mpi, temporal, physics, jet)
 
     def x_start(self) -> int:
         return self.grid.ng
@@ -160,3 +176,16 @@ class Config():
                 self.y_start():self.y_end(), \
                 self.z_start():self.z_end()\
         ]
+
+    def global_slot_length(self):
+        # these values will be 1-indexed. For example: slot_start = 1, slot_end = 25 has
+        # 25 locations on the x axis that are blowing. However, end-start = 25 - 1 = 24 locations
+        # so we add an additional +1 to account for this
+        return self.jet.slot_end - self.jet.slot_start + 1
+
+    def local_slot_length(self):
+        return self.jet.slot_end - self.jet.slot_start + 1
+
+    def local_to_global_x(self, x: int, rank: int):
+        previous_mpi_x = rank * self.nx_mpi();
+        return previous_mpi_x + x
