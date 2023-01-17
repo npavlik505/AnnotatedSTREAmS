@@ -133,7 +133,11 @@ subroutine local_slot_locations()
 
         ! the length of the slot on this local process is just
         ! the local end of the slot minus the local start of the slot
-        nx_slot = slot_end_local - x_start_slot
+        ! 
+        ! then, we have to add one to the slot length for 1-based indexing rules:
+        ! if x_start_slot = 1, x_end_slot = 3 then we clearly have 3 locations on the x axis where
+        ! we are forcing, but 3-1 = 2, hence the +1
+        nx_slot = slot_end_local - x_start_slot + 1
 
         nz_slot = nz
     else
