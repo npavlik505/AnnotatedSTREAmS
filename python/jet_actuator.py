@@ -49,7 +49,7 @@ class JetActuator():
         self.has_slot = streams.mod_streams.x_start_slot != -1
 
         if self.has_slot:
-            print(self.local_slot_nx, self.local_slot_nz, self.local_slot_start_x)
+            #print(self.local_slot_nx, self.local_slot_nz, self.local_slot_start_x)
             self.bc_velocity = streams.mod_streams.blowing_bc_slot_velocity[:, :]
 
     def set_amplitude(self, amplitude: float):
@@ -70,11 +70,11 @@ class JetActuator():
             global_x = self.config.local_to_global_x(local_x, self.rank)
 
             velo =  poly.evaluate(global_x)
-            print(f"velocity at idx {idx} / local x {local_x} / global x {global_x} ::: {velo}")
+            #print(f"velocity at idx {idx} / local x {local_x} / global x {global_x} ::: {velo}")
 
             self.bc_velocity[idx, 0:self.local_slot_nz] = velo
 
-        print(f"array shape for BC", self.bc_velocity.shape)
+        #print(f"array shape for BC", self.bc_velocity.shape)
 
         # finally, copy everything back to the GPU
         streams.wrap_copy_blowing_bc_to_gpu()
