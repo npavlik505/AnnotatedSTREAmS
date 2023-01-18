@@ -54,7 +54,7 @@ OBJ_FILES = alloc.o bcdf.o bcextr.o bcfree.o bc.o bcrecyc.o bcrelax.o bcshk.o bc
     setup.o solver.o startmpi.o stats.o step.o target_reystress.o tbforce.o updateghost.o utility.o utyibm.o \
     visflx.o writedf.o writefield.o writefieldvtk.o writegridplot3d.o writerst.o \
     writestatbl.o writestatchann.o writestat.o writestatzbl.o write_wallpressure.o visflx_stag.o \
-	write_probe_data.o bcblow.o
+	write_probe_data.o bcblow.o dissipation.o
 
 PY_API_OBJS = min_api.o
 
@@ -67,7 +67,7 @@ STATIC_FILES = alloc.F90 bcdf.F90 bcextr.F90 bcfree.F90 bc.F90 bcrecyc.F90 bcrel
     setup.F90 solver.F90 startmpi.F90 stats.F90 step.F90 target_reystress.F90 tbforce.F90 updateghost.F90 utility.F90 utyibm.F90 \
     visflx.F90 writedf.F90 writefield.F90 writefieldvtk.F90 writegridplot3d.F90 writerst.F90 \
     writestatbl.F90 writestatchann.F90 writestat.F90 writestatzbl.F90 write_wallpressure.F90 visflx_stag.F90 \
-	write_probe_data.F90 bcblow.F90 
+	write_probe_data.F90 bcblow.F90 dissipation.F90
 
 STATIC_MODS = mod_streams.F90 mod_sys.F90 euler.F90
 

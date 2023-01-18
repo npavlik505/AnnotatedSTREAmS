@@ -45,6 +45,8 @@ span_average = np.zeros([5, config.nx_mpi(), config.ny_mpi()], dtype=np.float64)
 temp_field = np.zeros((config.nx_mpi(), config.ny_mpi(), config.nz_mpi()), dtype=np.float64)
 dt_array = np.zeros(1)
 time_array = np.zeros(1)
+dissipation_rate_array = np.zeros(1)
+energy_array = np.zeros(1)
 
 #
 # execute streams setup routines
@@ -61,6 +63,7 @@ streams.wrap_init_solver()
 flowfields = io_utils.IoFile("/distribute_save/flowfields.h5")
 span_averages = io_utils.IoFile("/distribute_save/span_averages.h5")
 trajectories = io_utils.IoFile("/distribute_save/trajectories.h5")
+mesh_h5 = io_utils.IoFile("/distribute_save/mesh.h5")
 
 grid_shape = [config.grid.nx, config.grid.ny, config.grid.nz]
 span_average_shape = [config.grid.nx, config.grid.ny]
@@ -77,10 +80,25 @@ flowfield_time_dset = io_utils.Scalar1D(flowfields, [1], flowfield_writes, "time
 numwrites = int(math.ceil(config.temporal.num_iter / config.temporal.span_average_io_steps))
 span_average_dset = io_utils.VectorFieldXY2D(span_averages, [5, *span_average_shape], numwrites, "span_average", rank)
 shear_stress_dset = io_utils.ScalarFieldX1D(span_averages, [config.grid.nx], numwrites, "shear_stress", rank)
-span_average_time_dset = io_utils.Scalar1D(span_averages, [1], numwrites, "time", rank)
+span_average_time_dset = io_utils.Scalar0D(span_averages, [1], numwrites, "time", rank)
+dissipation_rate_dset = io_utils.Scalar0D(span_averages, [1], numwrites, "dissipation_rate", rank)
+energy_dset = io_utils.Scalar0D(span_averages, [1], numwrites, "energy", rank)
 
 # trajectories files
-dt_dset = io_utils.Scalar1D(trajectories, [1], config.temporal.num_iter, "dt", rank)
+dt_dset = io_utils.Scalar0D(trajectories, [1], config.temporal.num_iter, "dt", rank)
+
+# mesh datasets
+x_mesh_dset = io_utils.Scalar1DX(mesh_h5, [config.grid.nx], 1, "x_grid", rank)
+y_mesh_dset = io_utils.Scalar1D(mesh_h5, [config.grid.ny], 1, "y_grid", rank)
+z_mesh_dset = io_utils.Scalar1D(mesh_h5, [config.grid.nz], 1, "z_grid", rank)
+
+x_mesh = streams.mod_streams.x[config.x_start():config.x_end()]
+y_mesh = streams.mod_streams.y[config.y_start():config.y_end()]
+z_mesh = streams.mod_streams.z[config.z_start():config.z_end()]
+
+x_mesh_dset.write_array(x_mesh)
+y_mesh_dset.write_array(y_mesh)
+z_mesh_dset.write_array(z_mesh)
 
 #
 # Main solver loop, we start time stepping until we are done
@@ -112,6 +130,19 @@ for i in range(config.temporal.num_iter):
 
         # write the time at which this data was collected
         span_average_time_dset.write_array(time_array)
+
+        # calculate dissipation rate on GPU and store the result
+        streams.wrap_dissipation_calculation()
+        dissipation_rate_array[:] = streams.mod_streams.dissipation_rate
+        dissipation_rate_dset.write_array(dissipation_rate_array)
+        utils.hprint(f"dissipation is {dissipation_rate_array[0]}")
+
+        # calculate energy on GPU and store the result
+        streams.wrap_energy_calculation()
+        energy_array[:] = streams.mod_streams.energy
+        energy_dset.write_array(energy_array)
+
+        utils.hprint(f"energy is {energy_array[0]}")
 
     # save dt information for every step
     dt_array[:] = streams.mod_streams.dtglobal

@@ -109,6 +109,26 @@ module mod_streams
  ! boundary condition integer (see bc.f90) to indicate that the bottom boundary
  ! of the SBLI case should be blowing
  integer, parameter :: blowing_sbli_boundary_condition = 11
+
+
+ ! dissipation_rate is calculated in dissipation.F90, subroutine dissipation_calculation
+!f2py real*8 :: dissipation_rate
+ real(mykind) :: dissipation_rate
+
+ ! stencil for computing finite differences on the irregular y mesh
+!f2py real*8, dimension(:, :), allocatable :: fdm_y_stencil
+ real(mykind), dimension(:, :), allocatable :: fdm_y_stencil
+ real(mykind), dimension(:, :), allocatable :: fdm_y_stencil_gpu
+ ! the array we can re-use for calculating a 4th order accurate approximation for the first derivative
+ ! according to 
+ ! Generation of Finite Difference Formulas on Arbitrarily Spaced Grids (Fornberg, 1988)
+ real(mykind), dimension(:, :, :), allocatable :: fdm_individual_stencil
+ real(mykind), dimension(:), allocatable :: fdm_grid_points
+
+ ! energy is calculated in dissipation.F90, subroutine energy_calculation
+!f2py real*8 :: energy
+ real(mykind) :: energy 
+
  integer :: iflow
  integer :: idiski, ndim
  integer :: istore, istore_restart 
@@ -154,6 +174,7 @@ module mod_streams
 ! Coordinates and metric related quantities 
  integer :: jbgrid ! Parameter for grid stretching
  real(mykind) :: rlx,rly,rlz,rlywr,dyp_target
+!f2py real*8, dimension(:), allocatable :: x, y, z
  real(mykind), dimension(:), allocatable :: x,y,z,yn
  real(mykind), dimension(:), allocatable :: x_gpu,y_gpu,z_gpu,yn_gpu
  real(mykind), dimension(:), allocatable :: xg,yg,zg
@@ -260,6 +281,8 @@ module mod_streams
  attributes(device) :: wv_gpu, wv_trans_gpu
 
  attributes(device) :: blowing_bc_slot_velocity_gpu
+ attributes(device) :: fdm_y_stencil_gpu
+
 !
  ! TODO: this might be problematic
  !f2py intent(hide) :: local_comm, mydev
