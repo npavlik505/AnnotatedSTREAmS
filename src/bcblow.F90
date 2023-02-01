@@ -8,8 +8,9 @@ subroutine bcblow(ilat)
     implicit none
 
     integer :: ilat
-    integer :: i,j,k
+    integer :: i,j,k,l
     real(mykind) :: jet_velocity, rho
+    real(mykind) :: uu,vv,ww,qq,pp,tt,rhoe
 
     j = 1
 
@@ -51,6 +52,28 @@ subroutine bcblow(ilat)
                     ! w() is indexed differently on CPU and GPU
                     rho = w_gpu(i,j,k,1)
                     w_gpu(i,j,k,3) = rho * jet_velocity
+
+                    ! update the values at the ghost nodes. This is pretty similar to 
+                    ! the ghost nodes of bcwall, but instead we edit the y-velocity a little differently
+                    do l=1,ng
+                        rho  = w_gpu(i,1+l,k,1)
+                        uu   = w_gpu(i,1+l,k,2)/w_gpu(i,1+l,k,1)
+                        vv   = w_gpu(i,1+l,k,3)/w_gpu(i,1+l,k,1)
+                        ww   = w_gpu(i,1+l,k,4)/w_gpu(i,1+l,k,1)
+                        rhoe = w_gpu(i,1+l,k,5)
+
+                        qq   = 0.5_mykind*(uu*uu+vv*vv+ww*ww)
+                        pp   = gm1*(rhoe-rho*qq)
+                        tt   = pp/rho
+                        tt   = 2._mykind*twall-tt
+                        rho  = pp/tt
+
+                        w_gpu(i,1-l,k,1) =  rho
+                        w_gpu(i,1-l,k,2) = -rho*uu
+                        w_gpu(i,1-l,k,3) = -rho*(2.*jet_velocity  - vv)
+                        w_gpu(i,1-l,k,4) = -rho*ww
+                        w_gpu(i,1-l,k,5) = pp*gm+qq*rho
+                    enddo
 #else
                     jet_velocity = blowing_bc_slot_velocity(i-x_start_slot+1,k)
 

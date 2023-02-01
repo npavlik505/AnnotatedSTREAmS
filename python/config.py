@@ -1,6 +1,7 @@
 import json
 from typing import Any, Dict, Optional
 import numpy as np
+from enum import Enum, unique
 
 class Length():
     def __init__(self, lx: float, ly: float, lz: float):
@@ -109,19 +110,32 @@ class Physics():
 
         return Physics(mach, reynolds_friction, temp_ratio, visc_type, Tref, turb_inflow)
 
-class Jet():
-    def __init__(self, slot_start: int, slot_end: int):
-        self.slot_start = slot_start
-        self.slot_end = slot_end
+@unique
+class JetMethod(Enum):
+    none = "None"
+    constant = "Constant"
+    adaptive = "Adaptive"
 
-        self.has_slot = slot_start != -1
+class Jet():
+    def __init__(self, jet_method: JetMethod, extra_json: Optional[Dict]):
+        self.jet_method = jet_method
+        self.extra_json = extra_json
 
     @staticmethod
     def from_json(json_config: Dict[str, Any]):
-        slot_start = json_config["slot_start"]
-        slot_end = json_config["slot_end"]
+        jet = json_config["blowing_bc"]
 
-        return Jet(slot_start, slot_end)
+        if jet == "None":
+            jet_method_str = "None"
+            extra_json = None
+        else:
+            jet_method_str = list(jet.keys())[0]
+            extra_json = jet[jet_method_str]
+
+        jet_method = JetMethod(jet_method_str)
+        print(jet_method)
+
+        return Jet(jet_method, extra_json)
 
 class Config():
     def __init__(self, length: Length, grid: Grid, mpi: Mpi, temporal: Temporal, physics: Physics, jet: Jet):
@@ -176,15 +190,6 @@ class Config():
                 self.y_start():self.y_end(), \
                 self.z_start():self.z_end()\
         ]
-
-    def global_slot_length(self):
-        # these values will be 1-indexed. For example: slot_start = 1, slot_end = 25 has
-        # 25 locations on the x axis that are blowing. However, end-start = 25 - 1 = 24 locations
-        # so we add an additional +1 to account for this
-        return self.jet.slot_end - self.jet.slot_start + 1
-
-    def local_slot_length(self):
-        return self.jet.slot_end - self.jet.slot_start + 1
 
     def local_to_global_x(self, x: int, rank: int):
         previous_mpi_x = rank * self.nx_mpi();

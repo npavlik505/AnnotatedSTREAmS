@@ -78,6 +78,8 @@ flowfield_time_dset = io_utils.Scalar1D(flowfields, [1], flowfield_writes, "time
 
 # span average files
 numwrites = int(math.ceil(config.temporal.num_iter / config.temporal.span_average_io_steps))
+
+# this is rho, u, v, w, E (already normalized from the rho u, rho v... values from streams)
 span_average_dset = io_utils.VectorFieldXY2D(span_averages, [5, *span_average_shape], numwrites, "span_average", rank)
 shear_stress_dset = io_utils.ScalarFieldX1D(span_averages, [config.grid.nx], numwrites, "shear_stress", rank)
 span_average_time_dset = io_utils.Scalar0D(span_averages, [1], numwrites, "time", rank)
@@ -104,12 +106,12 @@ z_mesh_dset.write_array(z_mesh)
 # Main solver loop, we start time stepping until we are done
 #
 
-actuator = jet_actuator.JetActuator(rank, config)
+actuator = jet_actuator.init_actuator(rank, config)
 
 time = 0
 for i in range(config.temporal.num_iter):
 
-    actuator.set_amplitude(1.0)
+    actuator.step_actuator()
 
     streams.wrap_step_solver()
 

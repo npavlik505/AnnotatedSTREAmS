@@ -1,6 +1,9 @@
 import numpy as np
-from config import Config
+from config import Config, JetMethod, Jet
 import libstreams as streams
+from abc import ABC, abstractmethod
+from typing import Optional, Dict
+import utils
 
 # the equation of the polynomial for the jet actuation in coordinates local to the jet
 # actuator. This means that the jet actuator starts at x = 0 and ends at x = slot_end
@@ -32,20 +35,20 @@ class PolynomialFactory():
         return Polynomial(a, b, c)
 
 class JetActuator():
-    def __init__(self, rank: int, config: Config):
-        # if x_start_slot == -1 then we do not have a matrix
-        # allocated on this MPI process
+    def __init__(self, rank: int, config: Config, slot_start: int, slot_end: int):
 
         self.rank = rank
         self.config = config
 
-        vertex_x = (config.jet.slot_start +  config.jet.slot_end) / 2
-        self.factory = PolynomialFactory(vertex_x, config.jet.slot_start, config.jet.slot_end)
+        vertex_x = (slot_start +  slot_end) / 2
+        self.factory = PolynomialFactory(vertex_x, slot_start, slot_end)
 
         self.local_slot_start_x = streams.mod_streams.x_start_slot
         self.local_slot_nx = streams.mod_streams.nx_slot
         self.local_slot_nz = streams.mod_streams.nz_slot
 
+        # if x_start_slot == -1 then we do not have a matrix
+        # allocated on this MPI process
         self.has_slot = streams.mod_streams.x_start_slot != -1
 
         if self.has_slot:
@@ -80,3 +83,47 @@ class JetActuator():
         streams.wrap_copy_blowing_bc_to_gpu()
         return None
 
+class AbstractActuator(ABC):
+    @abstractmethod
+    def step_actuator(self):
+        pass
+
+class NoActuation(AbstractActuator):
+    def __init__(self):
+        utils.hprint("skipping initialization of jet actuator")
+        pass
+
+    def step_actuator(self):
+       pass
+
+class ConstantActuator(AbstractActuator):
+    def __init__(self, amplitude: float, slot_start: int, slot_end: int, rank: int, config: Config):
+        utils.hprint("initializing a constant velocity actuator")
+
+        self.slot_start = slot_start
+        self.slot_end = slot_end
+        self.amplitude = amplitude
+
+        self.actuator = JetActuator(rank, config, slot_start, slot_end)
+
+    def step_actuator(self):
+        self.actuator.set_amplitude(self.amplitude)
+
+def init_actuator(rank: int, config: Config) -> AbstractActuator:
+    jet_config = config.jet
+
+    if jet_config.jet_method == JetMethod.none:
+        return NoActuation()
+    elif jet_config.jet_method == JetMethod.constant:
+        print(jet_config.extra_json)
+        # these should be guaranteed to exist in the additional json information
+        # so we can essentially ignore the errors that we have here
+        slot_start = jet_config.extra_json["slot_start"]
+        slot_end = jet_config.extra_json["slot_end"]
+        amplitude = jet_config.extra_json["amplitude"]
+
+        return ConstantActuator(amplitude, slot_start, slot_end, rank, config);
+    elif jet_config.jet_method == JetMethod.adaptive:
+        exit()
+    else:
+        exit()
