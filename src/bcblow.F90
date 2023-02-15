@@ -70,7 +70,7 @@ subroutine bcblow(ilat)
 
                         w_gpu(i,1-l,k,1) =  rho
                         w_gpu(i,1-l,k,2) = -rho*uu
-                        w_gpu(i,1-l,k,3) = -rho*(2.*jet_velocity  - vv)
+                        w_gpu(i,1-l,k,3) = rho*(2.*jet_velocity  - vv)
                         w_gpu(i,1-l,k,4) = -rho*ww
                         w_gpu(i,1-l,k,5) = pp*gm+qq*rho
                     enddo

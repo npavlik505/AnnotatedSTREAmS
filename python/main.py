@@ -44,6 +44,7 @@ with open("/input/input.json", "r") as f:
 span_average = np.zeros([5, config.nx_mpi(), config.ny_mpi()], dtype=np.float64)
 temp_field = np.zeros((config.nx_mpi(), config.ny_mpi(), config.nz_mpi()), dtype=np.float64)
 dt_array = np.zeros(1)
+amplitude_array = np.zeros(1)
 time_array = np.zeros(1)
 dissipation_rate_array = np.zeros(1)
 energy_array = np.zeros(1)
@@ -88,6 +89,7 @@ energy_dset = io_utils.Scalar0D(span_averages, [1], numwrites, "energy", rank)
 
 # trajectories files
 dt_dset = io_utils.Scalar0D(trajectories, [1], config.temporal.num_iter, "dt", rank)
+amplitude_dset = io_utils.Scalar0D(trajectories, [1], config.temporal.num_iter, "jet_amplitude", rank)
 
 # mesh datasets
 x_mesh_dset = io_utils.Scalar1DX(mesh_h5, [config.grid.nx], 1, "x_grid", rank)
@@ -111,7 +113,7 @@ actuator = jet_actuator.init_actuator(rank, config)
 time = 0
 for i in range(config.temporal.num_iter):
 
-    actuator.step_actuator()
+    amplitude = actuator.step_actuator(time)
 
     streams.wrap_step_solver()
 
@@ -149,6 +151,10 @@ for i in range(config.temporal.num_iter):
     # save dt information for every step
     dt_array[:] = streams.mod_streams.dtglobal
     dt_dset.write_array(dt_array)
+
+    # save amplitude at every step
+    amplitude_array[:] = amplitude
+    amplitude_dset.write_array(amplitude_array)
 
     if not (config.temporal.full_flowfield_io_steps is None):
         if (i % config.temporal.full_flowfield_io_steps) == 0:

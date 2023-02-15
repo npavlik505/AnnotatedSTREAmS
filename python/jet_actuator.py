@@ -4,6 +4,7 @@ import libstreams as streams
 from abc import ABC, abstractmethod
 from typing import Optional, Dict
 import utils
+import math
 
 # the equation of the polynomial for the jet actuation in coordinates local to the jet
 # actuator. This means that the jet actuator starts at x = 0 and ends at x = slot_end
@@ -85,7 +86,8 @@ class JetActuator():
 
 class AbstractActuator(ABC):
     @abstractmethod
-    def step_actuator(self):
+    # returns the amplitude of the jet that was used
+    def step_actuator(self, time: float) -> float:
         pass
 
 class NoActuation(AbstractActuator):
@@ -93,8 +95,9 @@ class NoActuation(AbstractActuator):
         utils.hprint("skipping initialization of jet actuator")
         pass
 
-    def step_actuator(self):
-       pass
+    # returns the amplitude of the jet that was used
+    def step_actuator(self, _:float) -> float:
+        return 0.
 
 class ConstantActuator(AbstractActuator):
     def __init__(self, amplitude: float, slot_start: int, slot_end: int, rank: int, config: Config):
@@ -106,8 +109,29 @@ class ConstantActuator(AbstractActuator):
 
         self.actuator = JetActuator(rank, config, slot_start, slot_end)
 
-    def step_actuator(self):
+    # returns the amplitude of the jet that was used
+    def step_actuator(self, _: float) -> float:
         self.actuator.set_amplitude(self.amplitude)
+        return self.amplitude
+
+class SinusoidalActuator(AbstractActuator):
+    def __init__(self, amplitude: float, slot_start: int, slot_end: int, rank: int, config: Config, angular_frequency:float ):
+        utils.hprint("initializing a constant velocity actuator")
+
+        self.slot_start = slot_start
+        self.slot_end = slot_end
+        self.amplitude = amplitude
+
+        self.actuator = JetActuator(rank, config, slot_start, slot_end)
+        self.angular_frequency = angular_frequency
+
+    # returns the amplitude of the jet that was used
+    def step_actuator(self, time: float) -> float:
+        adjusted_amplitude = math.sin(self.angular_frequency * time)
+
+        self.actuator.set_amplitude(adjusted_amplitude)
+
+        return adjusted_amplitude
 
 def init_actuator(rank: int, config: Config) -> AbstractActuator:
     jet_config = config.jet
@@ -123,6 +147,16 @@ def init_actuator(rank: int, config: Config) -> AbstractActuator:
         amplitude = jet_config.extra_json["amplitude"]
 
         return ConstantActuator(amplitude, slot_start, slot_end, rank, config);
+    elif jet_config.jet_method == JetMethod.sinusoidal:
+        print(jet_config.extra_json)
+        # these should be guaranteed to exist in the additional json information
+        # so we can essentially ignore the errors that we have here
+        slot_start = jet_config.extra_json["slot_start"]
+        slot_end = jet_config.extra_json["slot_end"]
+        amplitude = jet_config.extra_json["amplitude"]
+        angular_frequency = jet_config.extra_json["angular_frequency"]
+
+        return SinusoidalActuator(amplitude, slot_start, slot_end, rank, config, angular_frequency);
     elif jet_config.jet_method == JetMethod.adaptive:
         exit()
     else:

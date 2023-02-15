@@ -114,6 +114,7 @@ class Physics():
 class JetMethod(Enum):
     none = "None"
     constant = "Constant"
+    sinusoidal = "Sinusoidal"
     adaptive = "Adaptive"
 
 class Jet():
