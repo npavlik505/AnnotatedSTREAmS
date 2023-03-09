@@ -29,6 +29,14 @@ class PolynomialFactory():
         self.vertex_x  = vertex_x
 
     def poly(self, amplitude: float) -> Polynomial:
+        # see streams section of lab documentation for the derivation of this
+        #
+        # in essence, it is solving for the coefficients a,b,c of the polynomial
+        # y = ax^2 + bx +c 
+        # using the fact that
+        # y(jet start) = 0
+        # y(jet end) = 0
+        # y((jet start + jet_end) / 2) = amplitude
         a = amplitude/(self.vertex_x**2 - self.vertex_x*self.slot_end- (self.vertex_x - self.slot_end)*self.slot_start)
         b = -(amplitude*self.slot_end+ amplitude*self.slot_start)/(self.vertex_x**2 - self.vertex_x*self.slot_end- (self.vertex_x - self.slot_end)*self.slot_start)
         c = amplitude*self.slot_end*self.slot_start/(self.vertex_x**2 - self.vertex_x*self.slot_end- (self.vertex_x - self.slot_end)*self.slot_start)
