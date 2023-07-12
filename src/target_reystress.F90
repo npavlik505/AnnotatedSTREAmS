@@ -85,4 +85,10 @@ subroutine target_reystress
   amat_df(3,3,j) = sqrt(reytarget(3,3,j)-amat_df(3,1,j)**2-amat_df(3,2,j)**2)
  enddo
 !
+
+deallocate(nyvec)
+deallocate(retauvec)
+deallocate(reydata)
+deallocate(reydataycode)
+
 end subroutine target_reystress

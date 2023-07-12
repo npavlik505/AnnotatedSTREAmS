@@ -135,6 +135,8 @@ subroutine initurb
    enddo
   enddo
  enddo
+ deallocate(ranf_av)
+
 !
  allocate(ranf_yz(3,1:nxmax,1:ny_1,1:nz_3))
  call trasp_yz_to_xy(ranf_yz,ranf_z,-1,nx_3,ny_1,nz_3,nblocks(3))

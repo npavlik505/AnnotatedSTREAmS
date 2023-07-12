@@ -114,3 +114,14 @@ subroutine wrap_energy_calculation()
 
     call energy_calculation()
 end subroutine
+
+! deallocate all fortran arrays
+! note that if the program is exiting, all arrays will be cleaned up by the OS.
+! however, if you wish to restart the solver, the solver will attempt to allocate new arrays
+! where existing arrays already exist. Therefore, it makes the most sense to simple deallocate the
+! older arrays.
+subroutine wrap_deallocate_all()
+    implicit none
+
+    call deallocate_all()
+end subroutine

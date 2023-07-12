@@ -14,6 +14,7 @@ streams.wrap_startmpi()
 from mpi4py import MPI
 import json
 import math
+import importlib
 
 #
 # initialize some global variables
@@ -53,8 +54,11 @@ energy_array = np.zeros(1)
 # execute streams setup routines
 #
 
-streams.wrap_setup()
-streams.wrap_init_solver()
+def setup_solver():
+    streams.wrap_setup()
+    streams.wrap_init_solver()
+
+setup_solver()
 
 # initialize files
 
@@ -164,6 +168,17 @@ for i in range(config.temporal.num_iter):
 
             # write the time at which this data was collected
             flowfield_time_dset.write_array(time_array)
+
+
+    if i == 5:
+        print("reloading python module")
+        streams.wrap_finalize_solver()
+        #streams.wrap_finalize()
+        del streams
+        import libstreams as streams
+        #importlib.reload(streams)
+        #streams.wrap_startmpi()
+        setup_solver()
 
 #
 # wrap up execution of solver
