@@ -38,6 +38,11 @@ program main
 !
 !======================================================================
  call finalize()     ! Finalize computation
+
+ call deallocate_all()
+ call setup()
+ call solver()
+ call finalize()     ! Finalize computation
 !======================================================================
 !
  call mpi_finalize(iermpi)

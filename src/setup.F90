@@ -5,7 +5,7 @@ subroutine setup
  use mod_streams
  implicit none
 
- ! find out the dimensions of the blowing slot
+! find out the dimensions of the blowing slot
 !
 !===================================================
  if (masterproc) write(error_unit,*) 'Allocation of variables'

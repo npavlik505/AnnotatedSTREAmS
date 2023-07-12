@@ -10,8 +10,6 @@ subroutine manage_solver
  updatestat = .false.
  savefield  = .false.
  saverst    = .false.
- saveprobe  = .false.
- savespanaverage = .false.
 !
  if (mod(icyc,istat)==0) updatestat = .true.
  if (telaps>tsol(istore)) savefield = .true.
@@ -20,18 +18,13 @@ subroutine manage_solver
  if (telaps>tsol_restart(istore_restart)) saverst = .true.
  if (mod(icyc, 100) == 0) savespanaverage= .true.
 
- ! check if we should write probe information
- if (save_probe_steps > 0) then
-    if (mod(icyc, save_probe_steps) == 0) saveprobe = .true.
- end if
-
  ! check if we should write span average information
  if (save_span_average_steps > 0) then
     if (mod(icyc, save_span_average_steps) == 0) savespanaverage = .true.
  end if
 
 !
- if (updatestat.or.savefield.or.saverst.or.saveprobe.or. savespanaverage) then
+ if (updatestat.or.savefield.or.saverst) then
   if (xrecyc>0._mykind) call recyc
   call updateghost()
   call prims()
@@ -46,10 +39,6 @@ subroutine manage_solver
   else
    call stats2d()
   endif
- endif
-
- if (saveprobe) then
-    call write_probe_data
  endif
 
  if (savespanaverage) then
@@ -83,7 +72,7 @@ subroutine manage_solver
  endif
 
 !
- if (updatestat.or.savefield.or.saverst.or.saveprobe.or.savespanaverage) then
+ if (updatestat.or.savefield.or.saverst) then
   call reset_cpu_gpu()
  endif
 !

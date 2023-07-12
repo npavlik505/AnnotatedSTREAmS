@@ -51,9 +51,6 @@ subroutine readinp
  read (12,*) rand_start
  read (12,*)
  read (12,*)
- read (12,*) save_probe_steps, save_span_average_steps
- read (12,*)
- read (12,*)
  read (12,*) force_sbli_blowing_bc, slot_start_x_global, slot_end_x_global
 
  write(*,*) "slot bounds", slot_start_x_global, slot_end_x_global

@@ -101,8 +101,6 @@ module mod_streams
  !f2py integer :: slot_start_x_global, slot_end_x_global
  integer :: slot_start_x_global, slot_end_x_global
 
- ! the number of solver steps between outputting probe information / span average information
- integer :: save_probe_steps, save_span_average_steps
  ! override the default boundary condition on the bottom surface for SBLI conditions
  ! to create a blowing area
  integer :: force_sbli_blowing_bc

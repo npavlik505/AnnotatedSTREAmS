@@ -40,9 +40,6 @@ subroutine init_solver
      startTiming = mpi_wtime()
     !
      stop_streams = .false.
-
-    ! init file for writing the time steps to a file 
-     call init_write_telaps()
 end subroutine
 
 subroutine step_solver()
